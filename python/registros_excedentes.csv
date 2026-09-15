@@ -1,0 +1,2 @@
+data_hora,client_ip,method,uri,feature,valor_real,limite,risk,decisao
+2026-09-15T22:32:49.716954,172.19.0.1,GET,/?teste=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,query_length,238,200,0.0,LIBERADO
