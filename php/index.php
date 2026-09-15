@@ -1,0 +1,1 @@
+<?php echo '<h1>Bem-vindo!</h1><p>Sistema alvo rodando (protegido via FPM).</p>'; ?>
