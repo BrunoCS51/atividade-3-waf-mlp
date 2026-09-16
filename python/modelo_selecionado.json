@@ -1,0 +1,53 @@
+{
+    "data_hora_selecao": "2026-09-16T11:27:58.863962-03:00",
+    "modelo": "bp",
+    "arquivo_origem": "pesos_bp.json",
+    "arquivo_implantacao": "pesos.json",
+    "threshold": 0.44,
+    "custo_seguranca_validacao": 2.0,
+    "metricas_validacao": {
+        "tp": 524,
+        "tn": 973,
+        "fp": 2,
+        "fn": 0,
+        "acuracia": 0.9986657771847899,
+        "precisao": 0.9961977186311787,
+        "recall": 1.0,
+        "f1": 0.9980952380952381,
+        "threshold": 0.44,
+        "custo_seguranca": 2.0,
+        "tempo_treinamento_segundos": 42.77634170003148
+    },
+    "criterio": "menor custo de seguranca na validacao",
+    "formula_custo": "C = alpha_fn * FN + beta_fp * FP",
+    "alpha_fn": 10.0,
+    "beta_fp": 1.0,
+    "candidatos": {
+        "bp": {
+            "tp": 524,
+            "tn": 973,
+            "fp": 2,
+            "fn": 0,
+            "acuracia": 0.9986657771847899,
+            "precisao": 0.9961977186311787,
+            "recall": 1.0,
+            "f1": 0.9980952380952381,
+            "threshold": 0.44,
+            "custo_seguranca": 2.0,
+            "tempo_treinamento_segundos": 42.77634170003148
+        },
+        "ag": {
+            "tp": 523,
+            "tn": 971,
+            "fp": 4,
+            "fn": 1,
+            "acuracia": 0.9966644429619747,
+            "precisao": 0.9924098671726755,
+            "recall": 0.9980916030534351,
+            "f1": 0.9952426260704093,
+            "threshold": 0.57,
+            "custo_seguranca": 14.0,
+            "tempo_treinamento_segundos": 16.42190779998782
+        }
+    }
+}

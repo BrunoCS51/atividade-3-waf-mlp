@@ -16,4 +16,6 @@ Thumbs.db
 
 # Logs
 *.log
-.analise.py
+
+# HTTP CSIC 2010: uso local; redistribuicao nao licenciada explicitamente
+external_data/csic2010/*.txt

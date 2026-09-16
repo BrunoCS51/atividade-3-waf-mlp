@@ -1,41 +1,400 @@
-import math
-import random
+import numpy as np
 import json
 
+
+# ========== FUNCOES ==============
+
 def sigmoid(x):
-    x = max(-709, min(709, x))
-    return 1 / (1 + math.exp(-x))
+    x = np.clip(x, -709, 709)
+    return 1 / (1 + np.exp(-x))
+
+
+def derivada_sigmoid(y):
+    return y * (1 - y)
+
+
+# ========== CLASSE MLP ==============
 
 class MLP:
+
     def __init__(self, input_size, hidden_size, output_size):
+
+        # REDE = [entrada, oculta, saida]
+        self.rede = np.array([
+            input_size,
+            hidden_size,
+            output_size
+        ])
+
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
-        
-        # TODO: Inicializar matrizes de pesos aleatorios (W1, W2) e vieses (b1, b2)
-        # Lembre-se que W1 liga as entradas a camada oculta e W2 liga a oculta a saida.
-        pass
 
-    def forward(self, X):
-        # TODO: Implementar a etapa de Feed-Forward.
-        # 1. Multiplicar entradas (X) pelos pesos W1 e somar b1
-        # 2. Aplicar funcao de ativacao (sigmoid) para gerar a camada oculta
-        # 3. Multiplicar a camada oculta pela matriz W2 e somar b2
-        # 4. Aplicar funcao sigmoid para gerar a saida e retornar o resultado
-        return [0.0] * self.output_size
+        self.bias = -1
 
-    def backward(self, X, y, lr=0.01):
-        # TODO: Implementar o algoritmo de Backpropagation
-        # 1. Calcular o erro na camada de saida
-        # 2. Calcular o erro propagado na camada oculta
-        # 3. Atualizar pesos W2 e b2 com base no erro e na taxa de aprendizado (lr)
-        # 4. Atualizar pesos W1 e b1
-        pass
+        self.n_camadas = self.rede.size
+        self.max_neuronios = np.max(self.rede)
+
+        # Matriz 3D de pesos
+        linhas = self.max_neuronios + 1
+        colunas = self.max_neuronios
+        profundidade = self.n_camadas - 1
+
+        self.w = np.zeros(
+            (linhas, colunas, profundidade)
+        )
+
+        # Inicializacao aleatoria dos pesos
+        for camada in range(profundidade):
+
+            n_anterior = self.rede[camada]
+            n_atual = self.rede[camada + 1]
+
+            self.w[
+                :n_anterior + 1,
+                :n_atual,
+                camada
+            ] = np.random.uniform(
+                -1,
+                1,
+                (n_anterior + 1, n_atual)
+            )
+
+
+    # ========== FEEDFORWARD ==============
+
+    def forward(self, x):
+
+        x = np.array(x, dtype=float)
+
+        if x.size != self.rede[0]:
+            raise ValueError(
+                "Quantidade de entradas diferente da camada de entrada!"
+            )
+
+        saida_camadas = np.zeros(
+            (self.n_camadas, self.max_neuronios)
+        )
+
+        # Primeira camada = entrada
+        saida_camadas[0, :self.rede[0]] = x
+
+        for camada in range(1, self.n_camadas):
+
+            entrada_camada = saida_camadas[
+                camada - 1,
+                :self.rede[camada - 1]
+            ]
+
+            # Adiciona o bias
+            entrada_bias = np.concatenate(
+                ([self.bias], entrada_camada)
+            )
+
+            n_anterior = self.rede[camada - 1]
+            n_atual = self.rede[camada]
+
+            indice_w = camada - 1
+
+            pesos_camada = self.w[
+                :n_anterior + 1,
+                :n_atual,
+                indice_w
+            ]
+
+            net = entrada_bias @ pesos_camada
+
+            saida = sigmoid(net)
+
+            saida_camadas[
+                camada,
+                :n_atual
+            ] = saida
+
+        return saida_camadas[
+            -1,
+            :self.rede[-1]
+        ]
+
+    # ========== BACKPROPAGATION ==============
+
+    def backward(self, x, yd, taxa=0.01):
+
+        x = np.array(x, dtype=float)
+        yd = np.array(yd, dtype=float)
+
+        if x.size != self.rede[0]:
+            raise ValueError(
+                "Quantidade de entradas diferente da camada de entrada!"
+            )
+
+        if yd.size != self.rede[-1]:
+            raise ValueError(
+                "Quantidade de saidas diferente da camada de saida!"
+            )
+
+        # ========== MEMORIA DAS CAMADAS ==============
+
+        saida_camadas = np.zeros(
+            (self.n_camadas, self.max_neuronios)
+        )
+
+        erro_camadas = np.zeros(
+            (self.n_camadas, self.max_neuronios)
+        )
+
+        # ========== FEEDFORWARD ==============
+
+        saida_camadas[0, :self.rede[0]] = x
+
+        for camada in range(1, self.n_camadas):
+
+            entrada_camada = saida_camadas[
+                camada - 1,
+                :self.rede[camada - 1]
+            ]
+
+            entrada_bias = np.concatenate(
+                ([self.bias], entrada_camada)
+            )
+
+            n_anterior = self.rede[camada - 1]
+            n_atual = self.rede[camada]
+
+            indice_w = camada - 1
+
+            pesos_camada = self.w[
+                :n_anterior + 1,
+                :n_atual,
+                indice_w
+            ]
+
+            net = entrada_bias @ pesos_camada
+
+            saida = sigmoid(net)
+
+            saida_camadas[
+                camada,
+                :n_atual
+            ] = saida
+
+        # ========== ERRO DA SAIDA ==============
+
+        y_s = saida_camadas[
+            -1,
+            :self.rede[-1]
+        ]
+
+        erro_saida = yd - y_s
+
+        erro_camadas[
+            -1,
+            :self.rede[-1]
+        ] = erro_saida
+
+        # ========== MSE ==============
+
+        mse = np.mean(erro_saida ** 2)
+
+        # ALTERADO PARA DIAGNOSTICO
+        # Apenas expoe dados ja calculados neste backward.
+        self.ultimas_ativacoes_ocultas = saida_camadas[
+            1,
+            :self.rede[1]
+        ].copy()
+        self.ultimos_delta_w = [
+            None
+            for _ in range(self.n_camadas - 1)
+        ]
+
+        # ========== BACKPROPAGATION ==============
+
+        for camada in range(
+            self.n_camadas - 1,
+            0,
+            -1
+        ):
+
+            n_atual = self.rede[camada]
+            n_anterior = self.rede[camada - 1]
+
+            erro_atual = erro_camadas[
+                camada,
+                :n_atual
+            ]
+
+            entrada_atual = saida_camadas[
+                camada - 1,
+                :n_anterior
+            ]
+
+            entrada_bias = np.concatenate(
+                ([self.bias], entrada_atual)
+            )
+
+            saida_atual = saida_camadas[
+                camada,
+                :n_atual
+            ]
+
+            indice_w = camada - 1
+
+            # ========== CORRECAO DOS PESOS ==============
+
+            delta_w = (
+                taxa * entrada_bias[:, np.newaxis]
+            ) * (
+                derivada_sigmoid(saida_atual)
+                * erro_atual
+            )
+
+            # ALTERADO PARA DIAGNOSTICO
+            self.ultimos_delta_w[indice_w] = delta_w.copy()
+
+            # ========== PROPAGA ERRO ==============
+
+            if camada > 1:
+
+                pesos_sem_bias = self.w[
+                    1:n_anterior + 1,
+                    :n_atual,
+                    indice_w
+                ]
+
+                erro_camadas[
+                    camada - 1,
+                    :n_anterior
+                ] = (
+                    erro_atual
+                    @ pesos_sem_bias.T
+                )
+
+            # ========== ATUALIZA PESOS ==============
+
+            self.w[
+                :n_anterior + 1,
+                :n_atual,
+                indice_w
+            ] += delta_w
+
+        return mse
+
+    # ========== PESOS ==============
+
+    def get_pesos(self):
+        return self.w.copy()
+
+
+    def set_pesos(self, pesos):
+        self.w = np.array(
+            pesos,
+            dtype=float
+        ).copy()
+
+    # ========== CROMOSSOMO ==============
+
+    def get_cromossomo(self):
+
+        cromossomo = []
+
+        for camada in range(self.n_camadas - 1):
+
+            n_anterior = self.rede[camada]
+            n_atual = self.rede[camada + 1]
+
+            pesos_camada = self.w[
+                :n_anterior + 1,
+                :n_atual,
+                camada
+            ]
+
+            cromossomo.extend(
+                pesos_camada.flatten()
+            )
+
+        return np.array(
+            cromossomo,
+            dtype=float
+        )
+
+
+    def set_cromossomo(self, cromossomo):
+
+        cromossomo = np.array(
+            cromossomo,
+            dtype=float
+        )
+
+        posicao = 0
+
+        for camada in range(self.n_camadas - 1):
+
+            n_anterior = self.rede[camada]
+            n_atual = self.rede[camada + 1]
+
+            quantidade = (
+                (n_anterior + 1)
+                * n_atual
+            )
+
+            pesos_camada = cromossomo[
+                posicao:
+                posicao + quantidade
+            ].reshape(
+                n_anterior + 1,
+                n_atual
+            )
+
+            self.w[
+                :n_anterior + 1,
+                :n_atual,
+                camada
+            ] = pesos_camada
+
+            posicao += quantidade
+
+    # ========== SALVAR ==============
 
     def save(self, filename):
-        # TODO: Salvar as matrizes W1, W2, b1 e b2 em um arquivo JSON
-        pass
+
+        dados = {
+            "rede": self.rede.tolist(),
+            "bias": self.bias,
+            "pesos": self.w.tolist()
+        }
+
+        with open(
+            filename,
+            "w",
+            encoding="utf-8"
+        ) as arquivo:
+
+            json.dump(
+                dados,
+                arquivo,
+                indent=4
+            )
+
+
+    # ========== CARREGAR ==============
 
     def load(self, filename):
-        # TODO: Carregar as matrizes de um arquivo JSON salvo
-        pass
+
+        with open(
+            filename,
+            "r",
+            encoding="utf-8"
+        ) as arquivo:
+
+            dados = json.load(arquivo)
+
+        self.rede = np.array(
+            dados["rede"]
+        )
+
+        self.bias = dados["bias"]
+
+        self.w = np.array(
+            dados["pesos"],
+            dtype=float
+        )

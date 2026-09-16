@@ -11,6 +11,7 @@ services:
     depends_on:
       - python_waf
       - php_app
+      - dashboard
 
   php_app:
     image: php:8.0-fpm
@@ -23,3 +24,12 @@ services:
       - "5000:5000"
     volumes:
       - ./python:/app
+
+  dashboard:
+    image: python:3.9-slim
+    working_dir: /dashboard
+    command: ["python", "server.py"]
+    volumes:
+      - ./dashboard:/dashboard:ro
+      - ./python:/data:ro
+      - ./external_data/csic2010:/external_data/csic2010:ro
