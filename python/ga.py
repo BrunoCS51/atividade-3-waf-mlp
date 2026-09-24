@@ -22,75 +22,10 @@ def fitness(individuo, mlp, X, Y):
     # como pesos da rede
     mlp.set_cromossomo(individuo)
 
-    # ---------- CAMADA OCULTA ----------
-
-    # Adiciona bias = -1 em todas as amostras
-    bias_entrada = np.full(
-        (X.shape[0], 1),
-        mlp.bias
-    )
-
-    entrada_bias = np.concatenate(
-        (bias_entrada, X),
-        axis=1
-    )
-
-    pesos_oculta = mlp.w[
-        :mlp.rede[0] + 1,
-        :mlp.rede[1],
-        0
-    ]
-
-    net_oculta = (
-        entrada_bias @ pesos_oculta
-    )
-
-    saida_oculta = (
-        1 / (
-            1 + np.exp(
-                -np.clip(
-                    net_oculta,
-                    -709,
-                    709
-                )
-            )
-        )
-    )
-
-
-    # ---------- CAMADA DE SAIDA ----------
-
-    bias_oculta = np.full(
-        (X.shape[0], 1),
-        mlp.bias
-    )
-
-    oculta_bias = np.concatenate(
-        (bias_oculta, saida_oculta),
-        axis=1
-    )
-
-    pesos_saida = mlp.w[
-        :mlp.rede[1] + 1,
-        :mlp.rede[2],
-        1
-    ]
-
-    net_saida = (
-        oculta_bias @ pesos_saida
-    )
-
-    saida = (
-        1 / (
-            1 + np.exp(
-                -np.clip(
-                    net_saida,
-                    -709,
-                    709
-                )
-            )
-        )
-    )
+    # O forward vetorizado usa a mesma sigmoide, bias = -1 e matrizes
+    # de pesos da implementação original, mas aceita uma ou mais camadas
+    # ocultas configuradas na MLP.
+    saida = mlp.forward_batch(X)
 
 
     # ---------- MSE ----------

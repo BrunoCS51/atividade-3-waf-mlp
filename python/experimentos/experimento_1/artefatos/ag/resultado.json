@@ -1,0 +1,106 @@
+{
+  "experiment_id": "experimento_1",
+  "algorithm": "ag",
+  "architecture": [
+    9,
+    10,
+    1
+  ],
+  "parameter_count": 111,
+  "seed": 43,
+  "parameters": {
+    "population": 100,
+    "generations": 100,
+    "selection_type": 1,
+    "tournament_size": 3,
+    "crossover_type": 2,
+    "crossover_rate": 0.8,
+    "sbx_eta": 1.0,
+    "mutation_type": 1,
+    "mutation_rate": 0.02,
+    "mutation_sigma": 0.1,
+    "mutation_eta": 20.0,
+    "weight_min": -5.0,
+    "weight_max": 5.0,
+    "elitism": 1,
+    "seed": 43
+  },
+  "threshold": 0.4600000000000001,
+  "threshold_source": "validacao",
+  "threshold_comparison": ">",
+  "training": {
+    "wall_seconds": 8.911532900005113,
+    "cpu_seconds": 9.0,
+    "fitness_evaluations": 10000,
+    "genes": 111
+  },
+  "metrics": {
+    "treino": {
+      "tn": 4530,
+      "fp": 21,
+      "fn": 6,
+      "tp": 2442,
+      "accuracy": 0.9961423060437206,
+      "precision": 0.9914738124238733,
+      "recall": 0.9975490196078431,
+      "f1": 0.9945021380574222,
+      "fpr": 0.004614370468029005,
+      "fnr": 0.0024509803921568627,
+      "threshold": 0.4600000000000001
+    },
+    "validacao": {
+      "tn": 970,
+      "fp": 5,
+      "fn": 0,
+      "tp": 524,
+      "accuracy": 0.9966644429619747,
+      "precision": 0.9905482041587902,
+      "recall": 1.0,
+      "f1": 0.9952516619183286,
+      "fpr": 0.005128205128205128,
+      "fnr": 0.0,
+      "threshold": 0.4600000000000001,
+      "security_cost": 5.0,
+      "threshold_source": "validacao",
+      "security_cost_formula": "alpha_fn * FN + beta_fp * FP",
+      "alpha_fn": 10.0,
+      "beta_fp": 1.0
+    },
+    "teste": {
+      "tn": 969,
+      "fp": 7,
+      "fn": 0,
+      "tp": 526,
+      "accuracy": 0.9953395472703063,
+      "precision": 0.9868667917448405,
+      "recall": 1.0,
+      "f1": 0.9933899905571294,
+      "fpr": 0.007172131147540984,
+      "fnr": 0.0,
+      "threshold": 0.4600000000000001
+    }
+  },
+  "diagnostic": {
+    "records": 100,
+    "final": {
+      "generation": 100,
+      "generation_best_train_mse": 0.007541167929199072,
+      "global_best_train_mse": 0.007541167929199072,
+      "mean_train_mse": 0.04474480986955852,
+      "validation_mse": 0.009075900581779968,
+      "train_validation_gap": 0.0015347326525808952,
+      "population_diversity": 1.3951964307784388,
+      "gene_mean": 0.2741092722289048,
+      "gene_std": 3.492506003765124,
+      "near_weight_boundaries_percentage": 32.17117117117117,
+      "wall_seconds": 0.08483690000139177,
+      "cpu_seconds": 0.0625
+    },
+    "path": "python/experimentos/experimento_1/artefatos/ag/diagnostico.csv"
+  },
+  "weights": {
+    "path": "python/experimentos/experimento_1/artefatos/ag/pesos.json",
+    "sha256": "b3a3eff750c85d0182c6c002edb0e64857465cc726fa682cd7a7533bb5e2b9e7"
+  },
+  "test_used_for_threshold": false
+}

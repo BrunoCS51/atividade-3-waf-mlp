@@ -1,0 +1,77 @@
+﻿feature,origem,tipo,motivo_remocao
+method_is_get,method,binaria,"Redundante com a categoria-base: GET é representado quando POST, PUT e other são zero."
+http_version_is_1_0,url,binaria,Versão HTTP constante (1.1) no corpus e com risco de memorizar o ambiente de coleta.
+http_version_is_1_1,url,binaria,Versão HTTP constante (1.1) no corpus e com risco de memorizar o ambiente de coleta.
+http_version_is_2,url,binaria,Versão HTTP constante (1.1) no corpus e com risco de memorizar o ambiente de coleta.
+http_version_is_other,url,binaria,Versão HTTP constante (1.1) no corpus e com risco de memorizar o ambiente de coleta.
+url_length_decoded_once,url,contagem,Redundante com comprimento bruto e contagem de percent-encoding.
+url_percent_encoding_count,url,contagem,"Removida por redundância, baixa diversidade no corpus ou menor prioridade de generalização."
+url_invalid_percent_count,url,contagem,"Removida por redundância, baixa diversidade no corpus ou menor prioridade de generalização."
+url_non_ascii_count,url,contagem,"Removida por redundância, baixa diversidade no corpus ou menor prioridade de generalização."
+url_control_char_count,url,contagem,"Removida por redundância, baixa diversidade no corpus ou menor prioridade de generalização."
+url_alpha_ratio,url,continua,Dependência composicional com proporções numérica e especial.
+url_digit_ratio,url,continua,"Removida por redundância, baixa diversidade no corpus ou menor prioridade de generalização."
+url_special_ratio,url,continua,"Removida por redundância, baixa diversidade no corpus ou menor prioridade de generalização."
+url_entropy,url,continua,"Custo maior em tempo real, instabilidade em strings curtas e sobreposição com medidas de composição."
+url_max_repeat_run,url,contagem,"Baixa prioridade após manter comprimento, composição, codificação e padrões defensivos."
+url_sql_pattern_count,url,contagem,Redundante com contagens separadas em path e query.
+url_xss_pattern_count,url,contagem,Redundante com contagens separadas em path e query.
+url_traversal_pattern_count,url,contagem,Redundante com contagens separadas em path e query.
+url_shell_metachar_count,url,contagem,Redundante com contagens separadas em path e query.
+path_length_decoded_once,path,contagem,Redundante com comprimento bruto e contagem de percent-encoding.
+path_alpha_ratio,path,continua,Dependência composicional com proporções numérica e especial.
+path_entropy,path,continua,"Custo maior em tempo real, instabilidade em strings curtas e sobreposição com medidas de composição."
+path_max_repeat_run,path,contagem,"Baixa prioridade após manter comprimento, composição, codificação e padrões defensivos."
+query_length_decoded_once,query,contagem,Redundante com comprimento bruto e contagem de percent-encoding.
+query_alpha_ratio,query,continua,Dependência composicional com proporções numérica e especial.
+query_entropy,query,continua,"Custo maior em tempo real, instabilidade em strings curtas e sobreposição com medidas de composição."
+query_max_repeat_run,query,contagem,"Baixa prioridade após manter comprimento, composição, codificação e padrões defensivos."
+body_length_decoded_once,body,contagem,Redundante com comprimento bruto e contagem de percent-encoding.
+body_alpha_ratio,body,continua,Dependência composicional com proporções numérica e especial.
+body_entropy,body,continua,"Custo maior em tempo real, instabilidade em strings curtas e sobreposição com medidas de composição."
+body_max_repeat_run,body,contagem,"Baixa prioridade após manter comprimento, composição, codificação e padrões defensivos."
+url_scheme_is_http,url,binaria,Scheme constante no CSIC e frequentemente indisponível em request-target relativo no WAF.
+url_scheme_is_https,url,binaria,Scheme constante no CSIC e frequentemente indisponível em request-target relativo no WAF.
+url_scheme_is_other,url,binaria,Scheme constante no CSIC e frequentemente indisponível em request-target relativo no WAF.
+url_scheme_missing,url,binaria,Scheme constante no CSIC e frequentemente indisponível em request-target relativo no WAF.
+url_host_length,url,contagem,Baixa diversidade no CSIC e risco de memorizar a infraestrutura; forma do host permanece representada.
+url_host_label_count,url,contagem,Baixa diversidade no CSIC e risco de memorizar a infraestrutura; forma do host permanece representada.
+url_port_value,url,contagem,Valor concreto da porta pode memorizar a infraestrutura; presença e validade foram preservadas.
+url_port_is_standard,url,binaria,Valor concreto da porta pode memorizar a infraestrutura; presença e validade foram preservadas.
+path_depth,path,contagem,Redundante com contagem de segmentos ou segmentos com aparência de extensão.
+path_empty_inner_segment_count,path,contagem,"Detalhe estrutural de prioridade menor e parcialmente coberto por barras duplas, traversal e estrutura de extensões."
+path_dot_segment_count,path,contagem,"Detalhe estrutural de prioridade menor e parcialmente coberto por barras duplas, traversal e estrutura de extensões."
+path_segments_with_dot_count,path,contagem,Redundante com contagem de segmentos ou segmentos com aparência de extensão.
+path_max_extensions_in_segment,path,contagem,"Detalhe estrutural de prioridade menor e parcialmente coberto por barras duplas, traversal e estrutura de extensões."
+path_trailing_slash,path,binaria,"Detalhe estrutural de prioridade menor e parcialmente coberto por barras duplas, traversal e estrutura de extensões."
+query_distinct_parameter_name_count,query,contagem,Derivável aproximadamente da quantidade total e da repetição de parâmetros.
+query_empty_name_count,query,contagem,Prioridade menor; estrutura malformada continua parcialmente coberta por fragmentos sem '=' e valores vazios.
+query_mean_name_length,query,continua,Reduzido por redundância com comprimento do componente e comprimentos máximos.
+query_mean_value_length,query,continua,Reduzido por redundância com comprimento do componente e comprimentos máximos.
+query_total_value_length,query,contagem,Reduzido por redundância com comprimento do componente e comprimentos máximos.
+body_distinct_parameter_name_count,body,contagem,Derivável aproximadamente da quantidade total e da repetição de parâmetros.
+body_empty_name_count,body,contagem,Prioridade menor; estrutura malformada continua parcialmente coberta por fragmentos sem '=' e valores vazios.
+body_mean_name_length,body,continua,Reduzido por redundância com comprimento do componente e comprimentos máximos.
+body_mean_value_length,body,continua,Reduzido por redundância com comprimento do componente e comprimentos máximos.
+body_total_value_length,body,contagem,Reduzido por redundância com comprimento do componente e comprimentos máximos.
+header_has_accept,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_has_accept_charset,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_has_accept_encoding,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_has_accept_language,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_has_cache_control,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_has_connection,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_has_cookie,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_has_pragma,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_has_user_agent,headers,binaria,Indicador constante ou pouco informativo no CSIC e desnecessário para interpretar as features finais mantidas.
+header_value_count,headers,contagem,Derivável de quantidade de headers únicos e duplicados.
+content_length_declared,headers,contagem,"Redundante com comprimento do body, presença/validade do header e diferença real-declarado."
+body_length_bytes,headers,contagem,"Redundante com comprimento do body, presença/validade do header e diferença real-declarado."
+content_length_matches_body,headers,binaria,"Redundante com comprimento do body, presença/validade do header e diferença real-declarado."
+user_agent_length,headers,contagem,"Pouca diversidade no CSIC e alto risco de memorizar o gerador, cliente ou sessão do corpus."
+user_agent_token_count,headers,contagem,"Pouca diversidade no CSIC e alto risco de memorizar o gerador, cliente ou sessão do corpus."
+user_agent_parenthesis_count,headers,contagem,"Pouca diversidade no CSIC e alto risco de memorizar o gerador, cliente ou sessão do corpus."
+host_header_length,headers,contagem,Parcialmente redundante com informações de host/porta da URL e coerência de host mantida.
+host_header_port_present,headers,binaria,Parcialmente redundante com informações de host/porta da URL e coerência de host mantida.
+host_header_port_valid,headers,binaria,Parcialmente redundante com informações de host/porta da URL e coerência de host mantida.
+cookie_length,headers,contagem,"Pouca diversidade no CSIC e alto risco de memorizar o gerador, cliente ou sessão do corpus."
+cookie_pair_count,headers,contagem,"Pouca diversidade no CSIC e alto risco de memorizar o gerador, cliente ou sessão do corpus."

@@ -1,0 +1,26 @@
+{
+  "seed": 42,
+  "method": "legacy_numpy_randomstate",
+  "estratificado": true,
+  "treino": {
+    "normal_0": 4551,
+    "anomalo_1": 2448,
+    "total": 6999
+  },
+  "validacao": {
+    "normal_0": 975,
+    "anomalo_1": 524,
+    "total": 1499
+  },
+  "teste": {
+    "normal_0": 976,
+    "anomalo_1": 526,
+    "total": 1502
+  },
+  "indices_sha256": {
+    "treino": "67d02e078d5940f7c0637d70c5b27774ee644454e7f2bda1c5e7d24e3c440df8",
+    "validacao": "11cb403f89a444d34956c8e08a71d3034dc6413881b6af6f80c8580a9c0df766",
+    "teste": "5e27d499215ac8d66236ca61875a5023517d6cf89ccc7146a3519c0c18116a90"
+  },
+  "test_used_for_threshold": false
+}

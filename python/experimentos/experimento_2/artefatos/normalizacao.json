@@ -1,0 +1,363 @@
+{
+  "estrategia": "feature-aware robusta; fit somente no treino",
+  "quantil_cap": 0.995,
+  "fit_origem": "treino",
+  "fit_amostras": 21000,
+  "fit_indices_sha256": "65bee2cb7f9d123e36ab420b74ae9bc52a597e9b255d1f08437cdd1bff78d9af",
+  "features": [
+    {
+      "feature": "method_is_post",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "method_is_put",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "method_is_other",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "url_length_raw",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 370.005000000001
+    },
+    {
+      "feature": "url_is_absolute",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "url_parse_error",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "url_host_present",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "url_host_is_ip",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "url_host_non_ascii_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "url_userinfo_present",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "url_port_present",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "url_port_valid",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "url_fragment_present",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "path_length_raw",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 55.0
+    },
+    {
+      "feature": "path_percent_encoding_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_invalid_percent_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_non_ascii_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_control_char_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_digit_ratio",
+      "metodo": "razao_clip_0_1"
+    },
+    {
+      "feature": "path_special_ratio",
+      "metodo": "razao_clip_0_1"
+    },
+    {
+      "feature": "path_sql_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_xss_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_traversal_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_shell_metachar_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_segment_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 5.0
+    },
+    {
+      "feature": "path_double_slash_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_extension_like_segment_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 2.0
+    },
+    {
+      "feature": "path_hidden_segment_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "path_nested_extension_transition",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "path_max_segment_length",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 24.0
+    },
+    {
+      "feature": "path_backslash_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "query_present",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "query_length_raw",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 320.0
+    },
+    {
+      "feature": "query_percent_encoding_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 18.0
+    },
+    {
+      "feature": "query_invalid_percent_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "query_non_ascii_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 3.0
+    },
+    {
+      "feature": "query_control_char_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "query_digit_ratio",
+      "metodo": "razao_clip_0_1"
+    },
+    {
+      "feature": "query_special_ratio",
+      "metodo": "razao_clip_0_1"
+    },
+    {
+      "feature": "query_sql_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 2.0
+    },
+    {
+      "feature": "query_xss_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 2.0
+    },
+    {
+      "feature": "query_traversal_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "query_shell_metachar_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 14.0
+    },
+    {
+      "feature": "query_parameter_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 13.0
+    },
+    {
+      "feature": "query_repeated_parameter_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "query_empty_value_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "query_without_equals_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "query_max_name_length",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 9.0
+    },
+    {
+      "feature": "query_max_value_length",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 83.0
+    },
+    {
+      "feature": "body_present",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "body_length_raw",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 326.005000000001
+    },
+    {
+      "feature": "body_percent_encoding_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 19.0
+    },
+    {
+      "feature": "body_invalid_percent_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "body_non_ascii_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 3.0
+    },
+    {
+      "feature": "body_control_char_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "body_digit_ratio",
+      "metodo": "razao_clip_0_1"
+    },
+    {
+      "feature": "body_special_ratio",
+      "metodo": "razao_clip_0_1"
+    },
+    {
+      "feature": "body_sql_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 2.0
+    },
+    {
+      "feature": "body_xss_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 2.0
+    },
+    {
+      "feature": "body_traversal_pattern_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "body_shell_metachar_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 14.0
+    },
+    {
+      "feature": "body_parameter_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 13.0
+    },
+    {
+      "feature": "body_repeated_parameter_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "body_empty_value_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "body_without_equals_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "body_max_name_length",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 9.0
+    },
+    {
+      "feature": "body_max_value_length",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 82.0
+    },
+    {
+      "feature": "header_unique_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 12.0
+    },
+    {
+      "feature": "header_duplicate_count",
+      "metodo": "cap_robusto_divisao",
+      "limite_superior_p995": 1.0
+    },
+    {
+      "feature": "header_has_host",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "header_has_content_type",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "content_type_is_form_urlencoded",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "header_has_content_length",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "content_length_valid",
+      "metodo": "binaria_identidade"
+    },
+    {
+      "feature": "content_length_delta",
+      "metodo": "escala_assinada_robusta",
+      "escala_abs_p995": 1.0
+    },
+    {
+      "feature": "host_matches_url_host",
+      "metodo": "binaria_identidade"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "count": 9,
+  "ordered_features": [
+    "is_post_put",
+    "query_length",
+    "body_length",
+    "special_chars_query",
+    "special_chars_body",
+    "has_sql_keywords",
+    "has_xss_keywords",
+    "is_standard_browser",
+    "request_rate"
+  ],
+  "sha256": "8c0d7a28d2dd88a40930f3ed2f659ef5319159299165440de118a1a83069ee95"
+}

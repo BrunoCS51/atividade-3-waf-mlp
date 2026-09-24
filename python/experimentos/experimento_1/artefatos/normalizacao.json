@@ -1,0 +1,51 @@
+{
+  "estrategia": "limites fixos do extractor do Experimento 1",
+  "fit_origem": "configuracao academica original",
+  "features": [
+    {
+      "feature": "is_post_put",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 1.0
+    },
+    {
+      "feature": "query_length",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 200.0
+    },
+    {
+      "feature": "body_length",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 1000.0
+    },
+    {
+      "feature": "special_chars_query",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 25.0
+    },
+    {
+      "feature": "special_chars_body",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 40.0
+    },
+    {
+      "feature": "has_sql_keywords",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 1.0
+    },
+    {
+      "feature": "has_xss_keywords",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 1.0
+    },
+    {
+      "feature": "is_standard_browser",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 1.0
+    },
+    {
+      "feature": "request_rate",
+      "metodo": "divisao_por_limite_e_clip_0_1",
+      "limite": 800.0
+    }
+  ]
+}

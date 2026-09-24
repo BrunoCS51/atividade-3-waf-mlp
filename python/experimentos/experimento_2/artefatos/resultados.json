@@ -1,0 +1,279 @@
+{
+  "experiment_id": "experimento_2",
+  "title": "Experimento 2 — CSIC 2010",
+  "architecture": [
+    76,
+    77,
+    1
+  ],
+  "feature_count": 76,
+  "dataset": {
+    "path": "tratamento_dados/datasets/csic_experimento2_desenvolvimento.csv",
+    "sha256": "6a259ca353d002ed17ab5a52099888cc859d791bdc3db95866117192d67c8fd2",
+    "samples": 30000,
+    "classes": {
+      "normal_0": 15000,
+      "anomalo_1": 15000,
+      "total": 30000
+    }
+  },
+  "split": {
+    "seed": 20260918,
+    "method": "frozen_default_rng",
+    "estratificado": true,
+    "treino": {
+      "normal_0": 10500,
+      "anomalo_1": 10500,
+      "total": 21000
+    },
+    "validacao": {
+      "normal_0": 2250,
+      "anomalo_1": 2250,
+      "total": 4500
+    },
+    "teste": {
+      "normal_0": 2250,
+      "anomalo_1": 2250,
+      "total": 4500
+    },
+    "indices_sha256": {
+      "treino": "65bee2cb7f9d123e36ab420b74ae9bc52a597e9b255d1f08437cdd1bff78d9af",
+      "validacao": "eb4bb0cf6afe78b71a6a8f5f4b252a0718ad8b6e612eb55bee42198438ad1e46",
+      "teste": "878475c15eb4f1746109562337072b99a3d408587b5fbd7ed5762f4b97cc0e6a"
+    },
+    "test_used_for_threshold": false
+  },
+  "normalization": {
+    "path": "python/experimentos/experimento_2/artefatos/normalizacao.json",
+    "fit_source": "treino"
+  },
+  "models": {
+    "bp": {
+      "experiment_id": "experimento_2",
+      "algorithm": "bp",
+      "architecture": [
+        76,
+        228,
+        1
+      ],
+      "parameter_count": 17785,
+      "seed": 20260918,
+      "parameters": {
+        "epochs": 100,
+        "learning_rate": 0.01,
+        "sample_shuffle_each_epoch": true,
+        "backward": "comportamento academico legado preservado",
+        "seed": 20260918
+      },
+      "threshold": 0.09000000000000001,
+      "threshold_source": "validacao",
+      "threshold_comparison": ">=",
+      "training": {
+        "wall_seconds": 347.9702728070006,
+        "cpu_seconds": 720.1253778530008
+      },
+      "metrics": {
+        "treino": {
+          "tn": 4968,
+          "fp": 5532,
+          "fn": 99,
+          "tp": 10401,
+          "accuracy": 0.7318571428571429,
+          "precision": 0.6527960836000753,
+          "recall": 0.9905714285714285,
+          "f1": 0.7869708319146521,
+          "fpr": 0.5268571428571428,
+          "fnr": 0.009428571428571429,
+          "threshold": 0.09000000000000001
+        },
+        "validacao": {
+          "tn": 1061,
+          "fp": 1189,
+          "fn": 21,
+          "tp": 2229,
+          "accuracy": 0.7311111111111112,
+          "precision": 0.6521357519016969,
+          "recall": 0.9906666666666667,
+          "f1": 0.7865208186309105,
+          "fpr": 0.5284444444444445,
+          "fnr": 0.009333333333333334,
+          "threshold": 0.09000000000000001,
+          "security_cost": 1294.0,
+          "threshold_source": "validacao",
+          "security_cost_formula": "alpha_fn * FN + beta_fp * FP",
+          "alpha_fn": 5.0,
+          "beta_fp": 1.0
+        },
+        "teste": {
+          "tn": 1058,
+          "fp": 1192,
+          "fn": 23,
+          "tp": 2227,
+          "accuracy": 0.73,
+          "precision": 0.6513600467973092,
+          "recall": 0.9897777777777778,
+          "f1": 0.7856764861527606,
+          "fpr": 0.5297777777777778,
+          "fnr": 0.010222222222222223,
+          "threshold": 0.09000000000000001
+        }
+      },
+      "diagnostic": {
+        "records": 100,
+        "final": {
+          "epoch": 100,
+          "online_mse_mean": 0.12540980109058927,
+          "train_mse_after_epoch": 0.123478557598761,
+          "validation_mse": 0.12715265319078625,
+          "train_validation_gap": 0.0036740955920252505,
+          "wall_seconds": 3.7327601659999345,
+          "cpu_seconds": 7.3160337349982,
+          "hidden_saturation_percentage": 29.728153717627404,
+          "layer_1_weight_abs_mean": 0.5444666358571092,
+          "layer_1_weight_std": 0.6786572860024433,
+          "layer_1_delta_abs_mean": 2.654518857897263e-05,
+          "layer_1_delta_abs_max": 0.01358954191005609,
+          "layer_2_weight_abs_mean": 0.47919404967400114,
+          "layer_2_weight_std": 0.8161085979196069,
+          "layer_2_delta_abs_mean": 0.00018548695863268694,
+          "layer_2_delta_abs_max": 0.0014814814224112527
+        },
+        "path": "python/experimentos/experimento_2/artefatos/bp/diagnostico.csv"
+      },
+      "weights": {
+        "path": "python/experimentos/experimento_2/artefatos/bp/pesos.json",
+        "sha256": "4ccb71cade1b8cdeb7e5d45948ecbd992e669c22677b2b1a73076f3dc714d6de"
+      },
+      "test_used_for_threshold": false,
+      "retrained_at": "2026-09-24T17:27:06.869489+00:00"
+    },
+    "ag": {
+      "experiment_id": "experimento_2",
+      "algorithm": "ag",
+      "architecture": [
+        76,
+        116,
+        1
+      ],
+      "parameter_count": 9049,
+      "seed": 20260919,
+      "parameters": {
+        "population": 100,
+        "generations": 100,
+        "selection_type": 1,
+        "tournament_size": 3,
+        "crossover_type": 2,
+        "crossover_rate": 0.8,
+        "sbx_eta": 1.0,
+        "mutation_type": 1,
+        "mutation_rate": 0.02,
+        "mutation_sigma": 0.1,
+        "mutation_eta": 20.0,
+        "weight_min": -5.0,
+        "weight_max": 5.0,
+        "elitism": 1,
+        "seed": 20260919
+      },
+      "threshold": 0.05,
+      "threshold_source": "validacao",
+      "threshold_comparison": ">=",
+      "training": {
+        "wall_seconds": 1946.855537941,
+        "cpu_seconds": 20830.775914784,
+        "fitness_evaluations": 10000,
+        "genes": 9049
+      },
+      "metrics": {
+        "treino": {
+          "tn": 5271,
+          "fp": 5229,
+          "fn": 380,
+          "tp": 10120,
+          "accuracy": 0.732904761904762,
+          "precision": 0.659326340478207,
+          "recall": 0.9638095238095238,
+          "f1": 0.7830090138883516,
+          "fpr": 0.498,
+          "fnr": 0.03619047619047619,
+          "threshold": 0.05
+        },
+        "validacao": {
+          "tn": 1126,
+          "fp": 1124,
+          "fn": 91,
+          "tp": 2159,
+          "accuracy": 0.73,
+          "precision": 0.6576302162656107,
+          "recall": 0.9595555555555556,
+          "f1": 0.780408458340864,
+          "fpr": 0.49955555555555553,
+          "fnr": 0.04044444444444444,
+          "threshold": 0.05,
+          "security_cost": 1579.0,
+          "threshold_source": "validacao",
+          "security_cost_formula": "alpha_fn * FN + beta_fp * FP",
+          "alpha_fn": 5.0,
+          "beta_fp": 1.0
+        },
+        "teste": {
+          "tn": 1115,
+          "fp": 1135,
+          "fn": 93,
+          "tp": 2157,
+          "accuracy": 0.7271111111111112,
+          "precision": 0.655224787363305,
+          "recall": 0.9586666666666667,
+          "f1": 0.7784193431974017,
+          "fpr": 0.5044444444444445,
+          "fnr": 0.04133333333333333,
+          "threshold": 0.05
+        }
+      },
+      "diagnostic": {
+        "records": 100,
+        "final": {
+          "generation": 100,
+          "generation_best_train_mse": 0.21881980648897822,
+          "global_best_train_mse": 0.21881980648897822,
+          "mean_train_mse": 0.4033652978198337,
+          "validation_mse": 0.2170493301320235,
+          "train_validation_gap": -0.0017704763569547366,
+          "population_diversity": 2.6008496356893427,
+          "gene_mean": 0.004140433523162596,
+          "gene_std": 3.451479313724113,
+          "near_weight_boundaries_percentage": 28.342468781080782,
+          "wall_seconds": 19.51641421199929,
+          "cpu_seconds": 208.8101064600014
+        },
+        "path": "python/experimentos/experimento_2/artefatos/ag/diagnostico.csv"
+      },
+      "weights": {
+        "path": "python/experimentos/experimento_2/artefatos/ag/pesos.json",
+        "sha256": "885e5a968ab9d4074a1068f5602c1e6f949cd21619aad92be5b94b6df1d22233"
+      },
+      "test_used_for_threshold": false,
+      "retrained_at": "2026-09-24T16:00:48.617883+00:00"
+    }
+  },
+  "official_round": 1,
+  "architecture_search_performed": true,
+  "external_reserved_used": false,
+  "total_wall_seconds": 2294.8258107480005,
+  "model_architectures": {
+    "bp": [
+      76,
+      228,
+      1
+    ],
+    "ag": [
+      76,
+      116,
+      1
+    ]
+  },
+  "last_retraining": {
+    "algorithm": "bp",
+    "completed_at": "2026-09-24T17:27:06.869489+00:00",
+    "previous_artifacts": "app/experimentos/experimento_2/historico_treinamentos/20260924-172706-869710-bp"
+  }
+}

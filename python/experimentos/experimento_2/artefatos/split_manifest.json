@@ -1,0 +1,26 @@
+{
+  "seed": 20260918,
+  "method": "frozen_default_rng",
+  "estratificado": true,
+  "treino": {
+    "normal_0": 10500,
+    "anomalo_1": 10500,
+    "total": 21000
+  },
+  "validacao": {
+    "normal_0": 2250,
+    "anomalo_1": 2250,
+    "total": 4500
+  },
+  "teste": {
+    "normal_0": 2250,
+    "anomalo_1": 2250,
+    "total": 4500
+  },
+  "indices_sha256": {
+    "treino": "65bee2cb7f9d123e36ab420b74ae9bc52a597e9b255d1f08437cdd1bff78d9af",
+    "validacao": "eb4bb0cf6afe78b71a6a8f5f4b252a0718ad8b6e612eb55bee42198438ad1e46",
+    "teste": "878475c15eb4f1746109562337072b99a3d408587b5fbd7ed5762f4b97cc0e6a"
+  },
+  "test_used_for_threshold": false
+}

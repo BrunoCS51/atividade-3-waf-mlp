@@ -1,0 +1,77 @@
+﻿ordem,nome_feature,origem,tipo,descricao,justificativa_permanencia
+1,method_is_post,method,binaria,Indica se o método é POST.,Representa o método sem codificação ordinal; GET é a categoria-base e outros métodos continuam distinguíveis.
+2,method_is_put,method,binaria,Indica se o método é PUT.,Representa o método sem codificação ordinal; GET é a categoria-base e outros métodos continuam distinguíveis.
+3,method_is_other,method,binaria,Indica se o método é diferente de GET/POST/PUT.,Representa o método sem codificação ordinal; GET é a categoria-base e outros métodos continuam distinguíveis.
+4,url_length_raw,url,contagem,Comprimento bruto. Aplicada a url.,Descreve formato geral do request-target e inconsistências reproduzíveis no WAF.
+5,url_is_absolute,url,binaria,Target em forma absoluta.,Descreve formato geral do request-target e inconsistências reproduzíveis no WAF.
+6,url_parse_error,url,binaria,Falha estrutural no parsing geral da URL.,Descreve formato geral do request-target e inconsistências reproduzíveis no WAF.
+7,url_host_present,url,binaria,Host presente no target.,"Representa genericamente presença, forma e coerência do host sem memorizar hostname do CSIC."
+8,url_host_is_ip,url,binaria,Hostname é endereço IP.,"Representa genericamente presença, forma e coerência do host sem memorizar hostname do CSIC."
+9,url_host_non_ascii_count,url,contagem,Caracteres não ASCII no hostname.,"Representa genericamente presença, forma e coerência do host sem memorizar hostname do CSIC."
+10,url_userinfo_present,url,binaria,Credenciais/userinfo na autoridade.,Descreve formato geral do request-target e inconsistências reproduzíveis no WAF.
+11,url_port_present,url,binaria,Delimitador de porta explícito.,"Preserva separadamente ausência e invalidade da porta, sem converter falha de parsing em valor válido."
+12,url_port_valid,url,binaria,Porta explícita numericamente válida.,"Preserva separadamente ausência e invalidade da porta, sem converter falha de parsing em valor válido."
+13,url_fragment_present,url,binaria,Fragmento presente no target.,Descreve formato geral do request-target e inconsistências reproduzíveis no WAF.
+14,path_length_raw,path,contagem,Comprimento bruto. Aplicada a path.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+15,path_percent_encoding_count,path,contagem,Quantidade de sequências percent-encoded válidas. Aplicada a path.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+16,path_invalid_percent_count,path,contagem,Sinais de porcentagem sem par hexadecimal válido. Aplicada a path.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+17,path_non_ascii_count,path,contagem,Caracteres não ASCII após uma decodificação. Aplicada a path.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+18,path_control_char_count,path,contagem,Caracteres de controle. Aplicada a path.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+19,path_digit_ratio,path,continua,Proporção de caracteres numéricos. Aplicada a path.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+20,path_special_ratio,path,continua,Proporção de caracteres especiais. Aplicada a path.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+21,path_sql_pattern_count,path,contagem,Ocorrências de padrões SQL genéricos. Aplicada a path.,"Sinal genérico de conteúdo defensivo aplicado ao path, sem depender de texto específico do corpus."
+22,path_xss_pattern_count,path,contagem,Ocorrências de padrões XSS genéricos. Aplicada a path.,"Sinal genérico de conteúdo defensivo aplicado ao path, sem depender de texto específico do corpus."
+23,path_traversal_pattern_count,path,contagem,Ocorrências de segmentos de navegação relativa. Aplicada a path.,"Sinal genérico de conteúdo defensivo aplicado ao path, sem depender de texto específico do corpus."
+24,path_shell_metachar_count,path,contagem,Metacaracteres comuns de shell/comando. Aplicada a path.,"Sinal genérico de conteúdo defensivo aplicado ao path, sem depender de texto específico do corpus."
+25,path_segment_count,path,contagem,Quantidade de segmentos não vazios.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+26,path_double_slash_count,path,contagem,Ocorrências de barras duplas.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+27,path_extension_like_segment_count,path,contagem,Segmentos com aparência de extensão.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+28,path_hidden_segment_count,path,contagem,Segmentos iniciados por ponto.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+29,path_nested_extension_transition,path,binaria,Extensão seguida de outro segmento com aparência de extensão.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+30,path_max_segment_length,path,contagem,Maior comprimento de segmento.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+31,path_backslash_count,path,contagem,Quantidade de barras invertidas.,"Preserva estrutura do path, inclusive codificação, segmentos e extensões, pouco representadas no Experimento 1."
+32,query_present,query,binaria,Presença do componente. Aplicada a query.,Distingue ausência legítima do componente de medidas numericamente iguais a zero.
+33,query_length_raw,query,contagem,Comprimento bruto. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+34,query_percent_encoding_count,query,contagem,Quantidade de sequências percent-encoded válidas. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+35,query_invalid_percent_count,query,contagem,Sinais de porcentagem sem par hexadecimal válido. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+36,query_non_ascii_count,query,contagem,Caracteres não ASCII após uma decodificação. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+37,query_control_char_count,query,contagem,Caracteres de controle. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+38,query_digit_ratio,query,continua,Proporção de caracteres numéricos. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+39,query_special_ratio,query,continua,Proporção de caracteres especiais. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+40,query_sql_pattern_count,query,contagem,Ocorrências de padrões SQL genéricos. Aplicada a query.,Contagem genérica de padrões defensivos; reproduzível e independente de nomes específicos de parâmetros.
+41,query_xss_pattern_count,query,contagem,Ocorrências de padrões XSS genéricos. Aplicada a query.,Contagem genérica de padrões defensivos; reproduzível e independente de nomes específicos de parâmetros.
+42,query_traversal_pattern_count,query,contagem,Ocorrências de segmentos de navegação relativa. Aplicada a query.,Contagem genérica de padrões defensivos; reproduzível e independente de nomes específicos de parâmetros.
+43,query_shell_metachar_count,query,contagem,Metacaracteres comuns de shell/comando. Aplicada a query.,Contagem genérica de padrões defensivos; reproduzível e independente de nomes específicos de parâmetros.
+44,query_parameter_count,query,contagem,Quantidade de pares de parâmetros. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+45,query_repeated_parameter_count,query,contagem,Parâmetros repetidos. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+46,query_empty_value_count,query,contagem,Parâmetros com valor vazio. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+47,query_without_equals_count,query,contagem,Partes sem sinal de igual. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+48,query_max_name_length,query,contagem,Maior nome de parâmetro. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+49,query_max_value_length,query,contagem,Maior valor de parâmetro. Aplicada a query.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+50,body_present,body,binaria,Presença do componente. Aplicada a body.,Distingue ausência legítima do componente de medidas numericamente iguais a zero.
+51,body_length_raw,body,contagem,Comprimento bruto. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+52,body_percent_encoding_count,body,contagem,Quantidade de sequências percent-encoded válidas. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+53,body_invalid_percent_count,body,contagem,Sinais de porcentagem sem par hexadecimal válido. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+54,body_non_ascii_count,body,contagem,Caracteres não ASCII após uma decodificação. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+55,body_control_char_count,body,contagem,Caracteres de controle. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+56,body_digit_ratio,body,continua,Proporção de caracteres numéricos. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+57,body_special_ratio,body,continua,Proporção de caracteres especiais. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+58,body_sql_pattern_count,body,contagem,Ocorrências de padrões SQL genéricos. Aplicada a body.,Contagem genérica de padrões defensivos; reproduzível e independente de nomes específicos de parâmetros.
+59,body_xss_pattern_count,body,contagem,Ocorrências de padrões XSS genéricos. Aplicada a body.,Contagem genérica de padrões defensivos; reproduzível e independente de nomes específicos de parâmetros.
+60,body_traversal_pattern_count,body,contagem,Ocorrências de segmentos de navegação relativa. Aplicada a body.,Contagem genérica de padrões defensivos; reproduzível e independente de nomes específicos de parâmetros.
+61,body_shell_metachar_count,body,contagem,Metacaracteres comuns de shell/comando. Aplicada a body.,Contagem genérica de padrões defensivos; reproduzível e independente de nomes específicos de parâmetros.
+62,body_parameter_count,body,contagem,Quantidade de pares de parâmetros. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+63,body_repeated_parameter_count,body,contagem,Parâmetros repetidos. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+64,body_empty_value_count,body,contagem,Parâmetros com valor vazio. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+65,body_without_equals_count,body,contagem,Partes sem sinal de igual. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+66,body_max_name_length,body,contagem,Maior nome de parâmetro. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+67,body_max_value_length,body,contagem,Maior valor de parâmetro. Aplicada a body.,"Resume estrutura, codificação ou composição de parâmetros sem memorizar seus nomes ou valores."
+68,header_unique_count,headers,contagem,Quantidade de nomes de headers distintos.,"Resumo genérico da estrutura de headers, sem usar valores identificadores do corpus."
+69,header_duplicate_count,headers,contagem,Ocorrências duplicadas de headers.,"Resumo genérico da estrutura de headers, sem usar valores identificadores do corpus."
+70,header_has_host,headers,binaria,Presença do header host.,Indicador necessário para distinguir header ausente de valor inválido ou medida igual a zero.
+71,header_has_content_type,headers,binaria,Presença do header content-type.,Indicador necessário para distinguir header ausente de valor inválido ou medida igual a zero.
+72,content_type_is_form_urlencoded,headers,binaria,Content-Type de formulário URL-encoded.,Representa semântica e coerência do corpo usando propriedades reproduzíveis em tempo real.
+73,header_has_content_length,headers,binaria,Presença do header content-length.,Indicador necessário para distinguir header ausente de valor inválido ou medida igual a zero.
+74,content_length_valid,headers,binaria,Content-Length inteiro não negativo.,Representa semântica e coerência do corpo usando propriedades reproduzíveis em tempo real.
+75,content_length_delta,headers,contagem_assinada,Diferença entre tamanho real e declarado.,Representa semântica e coerência do corpo usando propriedades reproduzíveis em tempo real.
+76,host_matches_url_host,headers,binaria,Coerência entre Host e hostname da URL.,"Representa genericamente presença, forma e coerência do host sem memorizar hostname do CSIC."

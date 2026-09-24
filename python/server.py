@@ -1,286 +1,185 @@
-import os
+"""WAF HTTP com inferência paralela E1/E2 e decisão operacional configurável."""
+
+from __future__ import annotations
+
 import csv
-import json  # ALTERADO PARA SELECAO AUTOMATICA DO MODELO
+import json
 import logging
-import urllib.parse  # ALTERADO PARA MONITORAMENTO VISUAL
+import os
 from datetime import datetime
+from pathlib import Path
+from urllib.parse import urlsplit
 
-from flask import Flask, request, Response
+from flask import Flask, Response, request
 
-from extractor import LIMITES, NOMES_FEATURES, extract_features
-from mlp import MLP
-
-
-app = Flask(__name__)
-
-# O log tecnico sanitizado em CSV substitui o access log HTTP, que poderia
-# expor query strings do dataset externo durante a avaliacao controlada.
-logging.getLogger("werkzeug").setLevel(logging.ERROR)
-
-mlp = MLP(input_size=9, hidden_size=10, output_size=1)
-
-if os.path.exists("pesos.json"):
-    mlp.load("pesos.json")
-
-# ALTERADO PARA SELECAO AUTOMATICA DO MODELO
-# Fallback preserva o threshold utilizado anteriormente pelo servidor.
-threshold = 0.35
-
-try:
-    with open(
-        "modelo_selecionado.json",
-        "r",
-        encoding="utf-8"
-    ) as arquivo:
-        configuracao_modelo = json.load(arquivo)
-
-    threshold_configurado = float(
-        configuracao_modelo["threshold"]
-    )
-
-    if not 0.0 <= threshold_configurado <= 1.0:
-        raise ValueError("Threshold fora do intervalo [0, 1].")
-
-    threshold = threshold_configurado
-except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
-    print(
-        "Configuracao de modelo ausente ou invalida; "
-        "usando threshold 0.35.",
-        flush=True
-    )
+from model_runtime import WAFRuntime
+from training_jobs import TrainingCoordinator
 
 
-# ALTERADO PARA MONITORAMENTO VISUAL
-def registrar_decisao_dashboard(uri, method, risk, decisao, status_http):
-    """Registra somente dados tecnicos seguros usados pelo dashboard."""
-    caminho = urllib.parse.urlsplit(uri).path or "/"
-    caminho = "".join(
-        caractere
-        if caractere.isprintable() and caractere not in "\r\n\t"
-        else "?"
-        for caractere in caminho
-    )[:200]
+BASE_DIR = Path(__file__).resolve().parent
+HISTORY_FIELDS = (
+    "timestamp", "method", "target_path", "primary_model",
+    "operational_decision", "e1_algorithm", "e1_score", "e1_decision",
+    "e2_algorithm", "e2_score", "e2_decision", "status_http",
+)
 
-    metodo = "".join(
-        caractere
-        for caractere in method.upper()
-        if caractere.isalpha()
-    )[:12]
 
-    arquivo = "dashboard_waf.csv"
-    arquivo_existe = os.path.exists(arquivo)
-
+def safe_path(target: str) -> str:
     try:
-        with open(
-            arquivo,
-            "a",
-            newline="",
-            encoding="utf-8"
-        ) as registro:
-            escritor = csv.writer(registro)
+        path = urlsplit(target).path or "/"
+    except ValueError:
+        path = str(target).split("?", 1)[0] or "/"
+    return "".join(
+        character if character.isprintable() and character not in "\r\n\t" else "?"
+        for character in path
+    )[:240]
 
-            if not arquivo_existe:
-                escritor.writerow([
-                    "data_hora",
-                    "metodo",
-                    "caminho",
-                    "risco",
-                    "threshold",
-                    "decisao",
-                    "status_http"
-                ])
 
-            escritor.writerow([
-                datetime.now().astimezone().isoformat(),
-                metodo,
-                caminho,
-                float(risk),
-                threshold,
-                decisao,
-                status_http
-            ])
-    except OSError as erro:
-        print(
-            f"Nao foi possivel registrar monitoramento: {erro}",
-            flush=True
+def create_app(runtime: WAFRuntime | None = None, history_path: Path | None = None):
+    application = Flask(__name__)
+    application.config["WAF_RUNTIME"] = runtime or WAFRuntime(
+        primary_model=os.environ.get("WAF_PRIMARY_MODEL", "experimento_1:bp"),
+        shadow_e1_algorithm=os.environ.get("WAF_SHADOW_E1_ALGORITHM", "bp"),
+        shadow_e2_algorithm=os.environ.get("WAF_SHADOW_E2_ALGORITHM", "bp"),
+    )
+    application.config["HISTORY_PATH"] = history_path or Path(
+        os.environ.get("WAF_HISTORY_PATH", BASE_DIR / "monitor_waf.csv")
+    )
+    application.config["TRAINING_COORDINATOR"] = TrainingCoordinator()
+
+    def require_training_token():
+        expected = os.environ.get("WAF_TRAINING_TOKEN", "local-academic-training")
+        received = request.headers.get("X-Training-Token", "")
+        if received != expected:
+            return Response("Não autorizado", status=403)
+        return None
+
+    def reload_runtime():
+        current = application.config["WAF_RUNTIME"]
+        application.config["WAF_RUNTIME"] = WAFRuntime(
+            primary_model=current.primary_model,
+            shadow_e1_algorithm=current.shadow_algorithms["experimento_1"],
+            shadow_e2_algorithm=current.shadow_algorithms["experimento_2"],
         )
 
+    @application.post("/__training/start")
+    def start_training():
+        denied = require_training_token()
+        if denied:
+            return denied
+        try:
+            payload = request.get_json(force=True)
+            job = application.config["TRAINING_COORDINATOR"].start(
+                payload, on_success=reload_runtime
+            )
+            return Response(
+                json.dumps(job, ensure_ascii=False),
+                status=202,
+                content_type="application/json; charset=utf-8",
+            )
+        except (TypeError, ValueError, RuntimeError) as error:
+            return Response(
+                json.dumps({"error": str(error)}, ensure_ascii=False),
+                status=400,
+                content_type="application/json; charset=utf-8",
+            )
 
-def valores_brutos_observados(features_normalizadas, excedentes):
-    """Recupera os valores brutos ja calculados, sem nova classificacao."""
-    excedentes_por_feature = {
-        item["feature"]: item["valor_real"]
-        for item in excedentes
-    }
-    valores = []
+    @application.get("/__training/status/<job_id>")
+    def training_status(job_id):
+        denied = require_training_token()
+        if denied:
+            return denied
+        try:
+            job = application.config["TRAINING_COORDINATOR"].status(job_id)
+            return Response(
+                json.dumps(job, ensure_ascii=False),
+                content_type="application/json; charset=utf-8",
+            )
+        except ValueError as error:
+            return Response(
+                json.dumps({"error": str(error)}, ensure_ascii=False),
+                status=404,
+                content_type="application/json; charset=utf-8",
+            )
 
-    for nome, normalizado, limite in zip(
-        NOMES_FEATURES,
-        features_normalizadas,
-        LIMITES
-    ):
-        valor = excedentes_por_feature.get(
-            nome,
-            float(normalizado) * limite
-        )
-        if abs(valor - round(valor)) < 1e-9:
-            valor = int(round(valor))
-        valores.append(valor)
-
-    return valores
-
-
-def headers_diagnostico(risk, features_brutas, features_normalizadas):
-    """Expoe somente numeros tecnicos ao replayer local controlado."""
-    return {
-        "X-WAF-Risk": format(float(risk), ".17g"),
-        "X-WAF-Threshold": format(float(threshold), ".17g"),
-        "X-WAF-Feature-Names": ",".join(NOMES_FEATURES),
-        "X-WAF-Feature-Limits": ",".join(str(valor) for valor in LIMITES),
-        "X-WAF-Features-Raw": ",".join(
-            format(float(valor), ".17g")
-            for valor in features_brutas
-        ),
-        "X-WAF-Features-Normalized": ",".join(
-            format(float(valor), ".17g")
-            for valor in features_normalizadas
-        )
-    }
-
-
-@app.route(
-    "/",
-    defaults={"path": ""},
-    methods=["GET", "POST", "PUT", "DELETE"]
-)
-@app.route(
-    "/<path:path>",
-    methods=["GET", "POST", "PUT", "DELETE"]
-)
-def check(path):
-
-    uri = request.headers.get("X-Original-URI", request.url)
-    method = request.headers.get("X-Original-Method", request.method)
-    client_ip = request.headers.get("X-Real-IP", request.remote_addr)
-    body = request.get_data(as_text=True)
-    simulacao_controlada = (
-        request.headers.get("X-Controlled-Simulation", "").lower()
-        == "csic2010"
-    )
-    features, excedentes = extract_features(
-        request.headers,
-        uri,
-        method,
-        body,
-        client_ip
-    )
-    features_brutas = valores_brutos_observados(features, excedentes)
-
-    risk = mlp.forward(features)[0]
-
-    # ALTERADO PARA MONITORAMENTO VISUAL
-    # A decisao permanece exatamente risk > threshold.
-    bloqueada = risk > threshold
-    decisao_waf = "BLOQUEADA" if bloqueada else "LIBERADA"
-    status_http = 403 if bloqueada else 200
-    registrar_decisao_dashboard(
-        uri,
-        method,
-        risk,
-        decisao_waf,
-        status_http
-    )
-
-    if excedentes:
-
-        # ALTERADO PARA SELECAO AUTOMATICA DO MODELO
-        decisao = "BLOQUEADO" if bloqueada else "LIBERADO"
-
-        arquivo = "registros_excedentes.csv"
-        arquivo_existe = os.path.exists(arquivo)
-
-        # Na avaliacao CSIC, nunca persiste query string do dataset externo.
-        uri_registro = (
-            urllib.parse.urlsplit(uri).path or "/"
-            if simulacao_controlada
-            else uri
-        )
-
-        with open(
-            arquivo,
-            "a",
-            newline="",
-            encoding="utf-8"
-        ) as f:
-
-            writer = csv.writer(f)
-
-            if not arquivo_existe:
-                writer.writerow([
-                    "data_hora",
-                    "client_ip",
-                    "method",
-                    "uri",
-                    "feature",
-                    "valor_real",
-                    "limite",
-                    "risk",
-                    "decisao"
-                ])
-
-            for excedente in excedentes:
-                writer.writerow([
-                    datetime.now().isoformat(),
-                    client_ip,
-                    method,
-                    uri_registro,
-                    excedente["feature"],
-                    excedente["valor_real"],
-                    excedente["limite"],
-                    risk,
-                    decisao
-                ])
-
-    print(
-        f"DEBUG [{method}]: "
-        f"Features: {features} | "
-        f"Risco: {risk:.4f}",
-        flush=True
-    )
-
-    headers_observacionais = (
-        headers_diagnostico(risk, features_brutas, features)
-        if simulacao_controlada
-        else {}
-    )
-
-    # ALTERADO PARA SELECAO AUTOMATICA DO MODELO
-    if bloqueada:
+    @application.get("/__training/active")
+    def active_training():
+        denied = require_training_token()
+        if denied:
+            return denied
         return Response(
-            "Bloqueado pelo WAF",
-            status=403,
-            headers=headers_observacionais
+            json.dumps(
+                application.config["TRAINING_COORDINATOR"].active(),
+                ensure_ascii=False,
+            ),
+            content_type="application/json; charset=utf-8",
         )
 
-    # O replay controlado precisa apenas da decisão do WAF. Responder aqui
-    # preserva os metadados observacionais que o redirecionamento interno do
-    # Nginx descartaria; requisições normais continuam seguindo ao PHP.
-    if simulacao_controlada:
-        return Response(
-            "Liberado pelo WAF",
-            status=200,
-            headers=headers_observacionais
-        )
+    def register(result, method, target, status_http):
+        path = Path(application.config["HISTORY_PATH"])
+        exists = path.exists() and path.stat().st_size > 0
+        with path.open("a", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=HISTORY_FIELDS)
+            if not exists:
+                writer.writeheader()
+            writer.writerow({
+                "timestamp": datetime.now().astimezone().isoformat(),
+                "method": "".join(c for c in method.upper() if c.isalpha())[:16],
+                "target_path": safe_path(target),
+                "primary_model": result.primary_model,
+                "operational_decision": result.operational.decision,
+                "e1_algorithm": result.experiment_one.algorithm,
+                "e1_score": format(result.experiment_one.score, ".17g"),
+                "e1_decision": result.experiment_one.decision,
+                "e2_algorithm": result.experiment_two.algorithm,
+                "e2_score": format(result.experiment_two.score, ".17g"),
+                "e2_decision": result.experiment_two.decision,
+                "status_http": status_http,
+            })
 
-    headers_observacionais["X-Accel-Redirect"] = f"/_php_backend{uri}"
-    return Response(
-        status=200,
-        headers=headers_observacionais
-    )
+    @application.route("/", defaults={"path": ""}, methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+    @application.route("/<path:path>", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+    def check(path):
+        original_uri = request.headers.get("X-Original-URI", request.full_path)
+        target = request.headers.get("X-Original-Target", request.url)
+        method = request.headers.get("X-Original-Method", request.method)
+        client_ip = request.headers.get("X-Real-IP", request.remote_addr or "unknown")
+        version = request.environ.get("SERVER_PROTOCOL", "HTTP/1.1")
+        result = application.config["WAF_RUNTIME"].evaluate(
+            request.headers, target, method, version, request.get_data(), client_ip
+        )
+        status_http = 403 if result.operational.blocked else 200
+        try:
+            register(result, method, target, status_http)
+        except OSError as error:
+            application.logger.error("Não foi possível registrar monitoramento: %s", error)
+
+        headers = {
+            "X-WAF-Primary-Model": result.primary_model,
+            "X-WAF-Decision": "BLOCKED" if result.operational.blocked else "NORMAL",
+            "X-WAF-E1-Algorithm": result.experiment_one.algorithm.upper(),
+            "X-WAF-E1-Score": format(result.experiment_one.score, ".8f"),
+            "X-WAF-E1-Decision": result.experiment_one.decision,
+            "X-WAF-E2-Algorithm": result.experiment_two.algorithm.upper(),
+            "X-WAF-E2-Score": format(result.experiment_two.score, ".8f"),
+            "X-WAF-E2-Decision": result.experiment_two.decision,
+        }
+        if result.operational.blocked:
+            return Response("Bloqueado pelo WAF", status=403, headers=headers)
+        safe_backend_uri = original_uri.replace("\r", "").replace("\n", "")
+        headers["X-Accel-Redirect"] = f"/_php_backend{safe_backend_uri}"
+        return Response(status=200, headers=headers)
+
+    return application
+
+
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
+app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(
-        host="0.0.0.0",
-        port=5000
+    print(
+        f"WAF iniciado; modelo principal={app.config['WAF_RUNTIME'].primary_model}",
+        flush=True,
     )
+    app.run(host="0.0.0.0", port=5000)

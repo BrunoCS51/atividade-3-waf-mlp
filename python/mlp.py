@@ -17,18 +17,50 @@ def derivada_sigmoid(y):
 
 class MLP:
 
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(
+        self,
+        input_size=None,
+        hidden_size=None,
+        output_size=None,
+        architecture=None
+    ):
 
-        # REDE = [entrada, oculta, saida]
-        self.rede = np.array([
-            input_size,
-            hidden_size,
-            output_size
-        ])
+        # A assinatura historica MLP(entrada, oculta, saida) permanece
+        # inalterada. Novos experimentos podem fornecer qualquer sequencia
+        # [entrada, ocultas..., saida] por meio de architecture.
+        if architecture is None:
+            if (
+                input_size is None
+                or hidden_size is None
+                or output_size is None
+            ):
+                raise ValueError(
+                    "Informe input_size, hidden_size e output_size "
+                    "ou uma architecture completa."
+                )
+            architecture = [
+                input_size,
+                hidden_size,
+                output_size
+            ]
 
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.output_size = output_size
+        self.rede = np.array(architecture, dtype=int)
+
+        if self.rede.ndim != 1 or self.rede.size < 3:
+            raise ValueError(
+                "A arquitetura deve conter entrada, ao menos uma "
+                "camada oculta e saida."
+            )
+
+        if np.any(self.rede <= 0):
+            raise ValueError(
+                "Todas as camadas devem possuir tamanho positivo."
+            )
+
+        self.input_size = int(self.rede[0])
+        # Mantido para compatibilidade com o Experimento 1 e diagnosticos.
+        self.hidden_size = int(self.rede[1])
+        self.output_size = int(self.rede[-1])
 
         self.bias = -1
 
@@ -115,6 +147,44 @@ class MLP:
             -1,
             :self.rede[-1]
         ]
+
+    def forward_batch(self, X):
+
+        X = np.asarray(X, dtype=float)
+
+        if X.ndim != 2 or X.shape[1] != self.rede[0]:
+            raise ValueError(
+                "Matriz de entrada incompatível com a camada de entrada!"
+            )
+
+        saida = X
+
+        for camada in range(self.n_camadas - 1):
+
+            bias = np.full(
+                (saida.shape[0], 1),
+                self.bias
+            )
+
+            entrada_bias = np.concatenate(
+                (bias, saida),
+                axis=1
+            )
+
+            n_anterior = self.rede[camada]
+            n_atual = self.rede[camada + 1]
+
+            pesos_camada = self.w[
+                :n_anterior + 1,
+                :n_atual,
+                camada
+            ]
+
+            saida = sigmoid(
+                entrada_bias @ pesos_camada
+            )
+
+        return saida
 
     # ========== BACKPROPAGATION ==============
 
@@ -389,8 +459,20 @@ class MLP:
             dados = json.load(arquivo)
 
         self.rede = np.array(
-            dados["rede"]
+            dados["rede"],
+            dtype=int
         )
+
+        if self.rede.ndim != 1 or self.rede.size < 3:
+            raise ValueError(
+                "Arquitetura invalida no arquivo de pesos."
+            )
+
+        self.input_size = int(self.rede[0])
+        self.hidden_size = int(self.rede[1])
+        self.output_size = int(self.rede[-1])
+        self.n_camadas = self.rede.size
+        self.max_neuronios = int(np.max(self.rede))
 
         self.bias = dados["bias"]
 

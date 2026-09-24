@@ -1,0 +1,4 @@
+﻿metodo,normal_requisicoes,normal_percentual,anomalo_requisicoes,anomalo_percentual,diferenca_anomalo_menos_normal_pp,normal_percentual_com_query,anomalo_percentual_com_query,normal_percentual_com_body,anomalo_percentual_com_body,normal_media_headers,anomalo_media_headers,normal_media_parametros_query,anomalo_media_parametros_query,normal_media_parametros_body,anomalo_media_parametros_body
+GET,28000,77.7778,15088,60.1955,-17.5823,28.5714,63.6864,0.0,0.0,10.0,10.0,1.5,3.7096,0.0,0.0
+POST,8000,22.2222,9580,38.2206,15.9984,0.0,0.0,100.0,100.0,12.0,12.0,0.0,0.0,5.25,5.8395
+PUT,0,0.0,397,1.5839,1.5839,0,0.0,0,100.0,0,12.0,0,0.0,0,5.5239

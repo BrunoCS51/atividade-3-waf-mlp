@@ -1,0 +1,4 @@
+__pycache__/
+*.py[cod]
+monitor_waf.csv
+experimentos/*/historico_treinamentos/

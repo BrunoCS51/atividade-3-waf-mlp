@@ -1,0 +1,75 @@
+{
+  "experiment_id": "experimento_2",
+  "title": "Experimento 2 — CSIC 2010",
+  "dataset": "tratamento_dados/datasets/csic_experimento2_desenvolvimento.csv",
+  "feature_count": 76,
+  "architecture": [
+    76,
+    77,
+    1
+  ],
+  "seed": 20260918,
+  "split": {
+    "train_ratio": 0.7,
+    "validation_ratio": 0.15,
+    "test_ratio": 0.15,
+    "stratified": true,
+    "method": "frozen_default_rng",
+    "expected_indices_sha256": {
+      "treino": "65bee2cb7f9d123e36ab420b74ae9bc52a597e9b255d1f08437cdd1bff78d9af",
+      "validacao": "eb4bb0cf6afe78b71a6a8f5f4b252a0718ad8b6e612eb55bee42198438ad1e46",
+      "teste": "878475c15eb4f1746109562337072b99a3d408587b5fbd7ed5762f4b97cc0e6a"
+    }
+  },
+  "normalization": {
+    "strategy": "feature_aware_robust_train_only",
+    "upper_quantile": 0.995
+  },
+  "backpropagation": {
+    "epochs": 100,
+    "learning_rate": 0.01,
+    "sample_shuffle_each_epoch": true,
+    "backward": "comportamento academico legado preservado",
+    "seed": 20260918
+  },
+  "genetic_algorithm": {
+    "population": 100,
+    "generations": 100,
+    "selection_type": 1,
+    "tournament_size": 3,
+    "crossover_type": 2,
+    "crossover_rate": 0.8,
+    "sbx_eta": 1.0,
+    "mutation_type": 1,
+    "mutation_rate": 0.02,
+    "mutation_sigma": 0.1,
+    "mutation_eta": 20.0,
+    "weight_min": -5.0,
+    "weight_max": 5.0,
+    "elitism": 1,
+    "seed": 20260919
+  },
+  "threshold": {
+    "minimum": 0.05,
+    "maximum": 0.95,
+    "step": 0.01,
+    "source": "validation_only",
+    "comparison": ">="
+  },
+  "security_cost": {
+    "alpha_fn": 5.0,
+    "beta_fp": 1.0
+  },
+  "model_architectures": {
+    "bp": [
+      76,
+      228,
+      1
+    ],
+    "ag": [
+      76,
+      116,
+      1
+    ]
+  }
+}

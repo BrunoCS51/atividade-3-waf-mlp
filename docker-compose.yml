@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   nginx:
     image: nginx:alpine
@@ -22,14 +21,26 @@ services:
     build: ./python
     ports:
       - "5000:5000"
+    environment:
+      WAF_PRIMARY_MODEL: ${WAF_PRIMARY_MODEL:-experimento_1:bp}
+      WAF_SHADOW_E1_ALGORITHM: ${WAF_SHADOW_E1_ALGORITHM:-bp}
+      WAF_SHADOW_E2_ALGORITHM: ${WAF_SHADOW_E2_ALGORITHM:-bp}
+      WAF_TRAINING_TOKEN: ${WAF_TRAINING_TOKEN:-local-academic-training}
     volumes:
       - ./python:/app
+      - ./tratamento_dados:/tratamento_dados:ro
 
   dashboard:
     image: python:3.9-slim
     working_dir: /dashboard
     command: ["python", "server.py"]
+    environment:
+      WAF_PRIMARY_MODEL: ${WAF_PRIMARY_MODEL:-experimento_1:bp}
+      WAF_SHADOW_E1_ALGORITHM: ${WAF_SHADOW_E1_ALGORITHM:-bp}
+      WAF_SHADOW_E2_ALGORITHM: ${WAF_SHADOW_E2_ALGORITHM:-bp}
+      WAF_TRAINING_TOKEN: ${WAF_TRAINING_TOKEN:-local-academic-training}
     volumes:
       - ./dashboard:/dashboard:ro
-      - ./python:/data:ro
+      - ./python:/data
       - ./external_data/csic2010:/external_data/csic2010:ro
+      - ./tratamento_dados:/tratamento_dados:ro

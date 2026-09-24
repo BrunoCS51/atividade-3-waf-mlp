@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "seed": 20260917,
+  "estrategia_selecao": "15.000 menores SHA-256(seed:classe:posição:hash_conteúdo) por classe",
+  "estrategia_shuffle_desenvolvimento": "random.Random(seed).shuffle",
+  "features": {
+    "quantidade_candidatas": 152,
+    "quantidade_finais": 76,
+    "quantidade_removidas": 76,
+    "sha256_contrato_ordenado": "def8e2461f2340e5bf0174da0ff633a6039045775fbb459b563dbc7f350615cd",
+    "ordem": [
+      "method_is_post",
+      "method_is_put",
+      "method_is_other",
+      "url_length_raw",
+      "url_is_absolute",
+      "url_parse_error",
+      "url_host_present",
+      "url_host_is_ip",
+      "url_host_non_ascii_count",
+      "url_userinfo_present",
+      "url_port_present",
+      "url_port_valid",
+      "url_fragment_present",
+      "path_length_raw",
+      "path_percent_encoding_count",
+      "path_invalid_percent_count",
+      "path_non_ascii_count",
+      "path_control_char_count",
+      "path_digit_ratio",
+      "path_special_ratio",
+      "path_sql_pattern_count",
+      "path_xss_pattern_count",
+      "path_traversal_pattern_count",
+      "path_shell_metachar_count",
+      "path_segment_count",
+      "path_double_slash_count",
+      "path_extension_like_segment_count",
+      "path_hidden_segment_count",
+      "path_nested_extension_transition",
+      "path_max_segment_length",
+      "path_backslash_count",
+      "query_present",
+      "query_length_raw",
+      "query_percent_encoding_count",
+      "query_invalid_percent_count",
+      "query_non_ascii_count",
+      "query_control_char_count",
+      "query_digit_ratio",
+      "query_special_ratio",
+      "query_sql_pattern_count",
+      "query_xss_pattern_count",
+      "query_traversal_pattern_count",
+      "query_shell_metachar_count",
+      "query_parameter_count",
+      "query_repeated_parameter_count",
+      "query_empty_value_count",
+      "query_without_equals_count",
+      "query_max_name_length",
+      "query_max_value_length",
+      "body_present",
+      "body_length_raw",
+      "body_percent_encoding_count",
+      "body_invalid_percent_count",
+      "body_non_ascii_count",
+      "body_control_char_count",
+      "body_digit_ratio",
+      "body_special_ratio",
+      "body_sql_pattern_count",
+      "body_xss_pattern_count",
+      "body_traversal_pattern_count",
+      "body_shell_metachar_count",
+      "body_parameter_count",
+      "body_repeated_parameter_count",
+      "body_empty_value_count",
+      "body_without_equals_count",
+      "body_max_name_length",
+      "body_max_value_length",
+      "header_unique_count",
+      "header_duplicate_count",
+      "header_has_host",
+      "header_has_content_type",
+      "content_type_is_form_urlencoded",
+      "header_has_content_length",
+      "content_length_valid",
+      "content_length_delta",
+      "host_matches_url_host"
+    ],
+    "normalizadas": false,
+    "politica_none": "0.0 somente quando acompanhado por indicador explícito de presença/validade",
+    "indicadores_ausencia": {
+      "url_host_is_ip": [
+        "url_host_present"
+      ],
+      "url_host_non_ascii_count": [
+        "url_host_present"
+      ],
+      "url_port_valid": [
+        "url_port_present"
+      ],
+      "content_type_is_form_urlencoded": [
+        "header_has_content_type"
+      ],
+      "content_length_valid": [
+        "header_has_content_length"
+      ],
+      "content_length_delta": [
+        "header_has_content_length",
+        "content_length_valid"
+      ],
+      "host_matches_url_host": [
+        "header_has_host",
+        "url_host_present"
+      ],
+      "query_length_raw": [
+        "query_present"
+      ],
+      "query_percent_encoding_count": [
+        "query_present"
+      ],
+      "query_invalid_percent_count": [
+        "query_present"
+      ],
+      "query_non_ascii_count": [
+        "query_present"
+      ],
+      "query_control_char_count": [
+        "query_present"
+      ],
+      "query_digit_ratio": [
+        "query_present"
+      ],
+      "query_special_ratio": [
+        "query_present"
+      ],
+      "query_sql_pattern_count": [
+        "query_present"
+      ],
+      "query_xss_pattern_count": [
+        "query_present"
+      ],
+      "query_traversal_pattern_count": [
+        "query_present"
+      ],
+      "query_shell_metachar_count": [
+        "query_present"
+      ],
+      "query_parameter_count": [
+        "query_present"
+      ],
+      "query_repeated_parameter_count": [
+        "query_present"
+      ],
+      "query_empty_value_count": [
+        "query_present"
+      ],
+      "query_without_equals_count": [
+        "query_present"
+      ],
+      "query_max_name_length": [
+        "query_present"
+      ],
+      "query_max_value_length": [
+        "query_present"
+      ],
+      "body_length_raw": [
+        "body_present"
+      ],
+      "body_percent_encoding_count": [
+        "body_present"
+      ],
+      "body_invalid_percent_count": [
+        "body_present"
+      ],
+      "body_non_ascii_count": [
+        "body_present"
+      ],
+      "body_control_char_count": [
+        "body_present"
+      ],
+      "body_digit_ratio": [
+        "body_present"
+      ],
+      "body_special_ratio": [
+        "body_present"
+      ],
+      "body_sql_pattern_count": [
+        "body_present"
+      ],
+      "body_xss_pattern_count": [
+        "body_present"
+      ],
+      "body_traversal_pattern_count": [
+        "body_present"
+      ],
+      "body_shell_metachar_count": [
+        "body_present"
+      ],
+      "body_parameter_count": [
+        "body_present"
+      ],
+      "body_repeated_parameter_count": [
+        "body_present"
+      ],
+      "body_empty_value_count": [
+        "body_present"
+      ],
+      "body_without_equals_count": [
+        "body_present"
+      ],
+      "body_max_name_length": [
+        "body_present"
+      ],
+      "body_max_value_length": [
+        "body_present"
+      ]
+    }
+  },
+  "contagens": {
+    "reserved_normal": 21000,
+    "development_normal": 15000,
+    "reserved_anomalo": 10065,
+    "development_anomalo": 15000,
+    "development_total": 30000,
+    "reserved_total": 31065,
+    "total": 61065
+  },
+  "fontes": {
+    "normal": {
+      "caminho": "external_data/csic2010/normalTrafficTraining.txt",
+      "bytes": 20640988,
+      "sha256": "d3344377d4721b03b906ca232ab44bfd81b9c1356f967ec9d348532ec420f000"
+    },
+    "anomalo": {
+      "caminho": "external_data/csic2010/anomalousTrafficTest.txt",
+      "bytes": 16090299,
+      "sha256": "ec77d784966896330869c5b596ede6a716101c14b5f139144915bb10822a03e1"
+    }
+  },
+  "validacoes": {
+    "sobreposicao_ids": 0,
+    "sobreposicao_conteudo": 0,
+    "requisicoes_perdidas": 0,
+    "replay_recuperavel": true,
+    "development_ids_sha256": "7c0633b2faf5caab627f7308afd4ac8338769ba341cfd3d9db5518663ea7a855",
+    "reserved_ids_sha256": "41fea386f3111289439f46df40fc5eb2fd293ff49b5528e69b6f34ec1953f45a"
+  },
+  "arquivos": {
+    "desenvolvimento": {
+      "caminho": "tratamento_dados/datasets/csic_experimento2_desenvolvimento.csv",
+      "bytes": 6460777,
+      "sha256": "6a259ca353d002ed17ab5a52099888cc859d791bdc3db95866117192d67c8fd2"
+    },
+    "reservado": {
+      "caminho": "tratamento_dados/datasets/csic_experimento2_reservado.jsonl",
+      "bytes": 57407319,
+      "sha256": "9a50b3098ea54390ebd78c033718d894fd4be378719a36fb8ff07397e7b123eb"
+    },
+    "controle": {
+      "caminho": "tratamento_dados/datasets/controle_particoes.jsonl",
+      "bytes": 13624210,
+      "sha256": "d154d5ef91a63daa313af36406978619c1d482f2e02be8ead96ef50f59339637"
+    }
+  }
+}

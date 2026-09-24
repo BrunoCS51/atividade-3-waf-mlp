@@ -1,382 +1,126 @@
-import ast
+"""Servidor estático e API somente-leitura do dashboard final."""
+
+from __future__ import annotations
+
 import csv
-from collections import Counter, deque
-from datetime import datetime
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import base64
+import http.client
 import json
 import os
-from pathlib import Path
+import random
 import socket
-import statistics
+import threading
 import urllib.parse
-
-from csic_simulator import CSICError, SimulationManager
-from feature_diagnostics import build_feature_analysis
+from datetime import datetime
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
 
 DASHBOARD_DIR = Path(__file__).resolve().parent
 DATA_DIR = Path(os.environ.get("WAF_DATA_DIR", "/data"))
+if not DATA_DIR.exists():
+    DATA_DIR = DASHBOARD_DIR.parent / "python"
 HOST = "0.0.0.0"
 PORT = 8000
-CSIC_DATA_DIR = Path("/external_data/csic2010")
-if not CSIC_DATA_DIR.exists():
-    CSIC_DATA_DIR = DASHBOARD_DIR.parent / "external_data" / "csic2010"
-
-EXTRACTOR_PATH = DATA_DIR / "extractor.py"
-if not EXTRACTOR_PATH.exists():
-    EXTRACTOR_PATH = DASHBOARD_DIR.parent / "python" / "extractor.py"
-SIMULATION_MANAGER = SimulationManager(CSIC_DATA_DIR)
-
-
-def ler_json(nome):
-    caminho = DATA_DIR / nome
-
-    try:
-        with caminho.open("r", encoding="utf-8") as arquivo:
-            dados = json.load(arquivo)
-
-        return {
-            "disponivel": True,
-            "dados": dados,
-            "atualizado_em": datetime.fromtimestamp(
-                caminho.stat().st_mtime
-            ).astimezone().isoformat()
-        }
-    except (OSError, json.JSONDecodeError, TypeError):
-        return {
-            "disponivel": False,
-            "dados": None,
-            "atualizado_em": None
-        }
+RESERVED_DATA_PATH = Path(os.environ.get(
+    "CSIC_RESERVED_PATH",
+    "/tratamento_dados/datasets/csic_experimento2_reservado.jsonl",
+))
+if not RESERVED_DATA_PATH.is_file():
+    RESERVED_DATA_PATH = (
+        DASHBOARD_DIR.parent
+        / "tratamento_dados"
+        / "datasets"
+        / "csic_experimento2_reservado.jsonl"
+    )
+_RESERVED_INDEX = None
+_RESERVED_INDEX_LOCK = threading.Lock()
+_RANDOM = random.SystemRandom()
 
 
-def converter_valor(valor):
-    if valor is None or valor == "":
+def read_json(path: Path):
+    with path.open("r", encoding="utf-8") as stream:
+        return json.load(stream)
+
+
+def read_diagnostic(path: Path):
+    with path.open("r", encoding="utf-8", newline="") as stream:
+        return [
+            {key: number(value) for key, value in row.items()}
+            for row in csv.DictReader(stream)
+        ]
+
+
+def number(value):
+    if value in (None, ""):
         return None
-
     try:
-        numero = float(valor)
-        return int(numero) if numero.is_integer() else numero
+        numeric = float(value)
+        return int(numeric) if numeric.is_integer() else numeric
     except (TypeError, ValueError):
-        return valor
+        return value
 
 
-def ler_csv(nome, limite=None):
-    caminho = DATA_DIR / nome
-
-    try:
-        with caminho.open(
-            "r",
-            encoding="utf-8",
-            newline=""
-        ) as arquivo:
-            leitor = csv.DictReader(arquivo)
-
-            if limite:
-                linhas = deque(leitor, maxlen=limite)
-            else:
-                linhas = list(leitor)
-
-        return {
-            "disponivel": True,
-            "linhas": [
-                {
-                    chave: converter_valor(valor)
-                    for chave, valor in linha.items()
-                }
-                for linha in linhas
-            ],
-            "atualizado_em": datetime.fromtimestamp(
-                caminho.stat().st_mtime
-            ).astimezone().isoformat()
-        }
-    except (OSError, csv.Error):
-        return {
-            "disponivel": False,
-            "linhas": [],
-            "atualizado_em": None
-        }
-
-
-def resumo_log_requisicoes():
-    caminho = DATA_DIR / "dashboard_waf.csv"
-    try:
-        return {
-            "disponivel": caminho.is_file(),
-            "atualizado_em": datetime.fromtimestamp(
-                caminho.stat().st_mtime
-            ).astimezone().isoformat()
-        }
-    except OSError:
-        return {"disponivel": False, "atualizado_em": None}
-
-
-def _parse_data_iso(value):
-    if not value:
-        return None
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    if parsed.tzinfo is None:
-        parsed = parsed.astimezone()
-    return parsed.timestamp()
-
-
-def pagina_log_requisicoes(inicio, fim, pagina=1, por_pagina=10):
-    caminho = DATA_DIR / "dashboard_waf.csv"
-    pagina = max(int(pagina), 1)
-    por_pagina = min(max(int(por_pagina), 1), 50)
-    inicio_timestamp = _parse_data_iso(inicio)
-    fim_timestamp = _parse_data_iso(fim) if fim else float("inf")
-
-    if inicio_timestamp is None:
-        return {
-            "fonte": "waf",
-            "pagina": 1,
-            "por_pagina": por_pagina,
-            "paginas": 1,
-            "total": 0,
-            "itens": [],
-            "resumo": {
-                "total": 0,
-                "liberadas": 0,
-                "bloqueadas": 0,
-                "risco_medio": None,
-            },
-            "atualizado_em": None,
-        }
-
-    rows = []
-    if caminho.is_file():
-        with caminho.open("r", encoding="utf-8", newline="") as source:
-            for row in csv.DictReader(source):
-                timestamp = _parse_data_iso(row.get("data_hora"))
-                if timestamp is None or not inicio_timestamp <= timestamp <= fim_timestamp:
-                    continue
-                rows.append({
-                    key: converter_valor(value)
-                    for key, value in row.items()
-                    if key is not None
-                })
-
-    rows.reverse()
-    total = len(rows)
-    paginas = max((total + por_pagina - 1) // por_pagina, 1)
-    pagina = min(pagina, paginas)
-    offset = (pagina - 1) * por_pagina
-    items = rows[offset:offset + por_pagina]
-    blocked = sum(row.get("decisao") == "BLOQUEADA" for row in rows)
-    risks = [
-        float(row["risco"])
-        for row in rows
-        if isinstance(row.get("risco"), (int, float))
-    ]
+def _history_model_summary(result):
+    """Expõe somente os dados necessários para comparação, nunca pesos."""
     return {
-        "fonte": "waf",
-        "pagina": pagina,
-        "por_pagina": por_pagina,
-        "paginas": paginas,
-        "total": total,
-        "itens": items,
-        "resumo": {
-            "total": total,
-            "liberadas": total - blocked,
-            "bloqueadas": blocked,
-            "risco_medio": statistics.fmean(risks) if risks else None,
+        "architecture": result.get("architecture", []),
+        "parameter_count": result.get("parameter_count"),
+        "parameters": result.get("parameters", {}),
+        "threshold": result.get("threshold"),
+        "training": result.get("training", {}),
+        "metrics": {
+            split: result.get("metrics", {}).get(split, {})
+            for split in ("validacao", "teste")
         },
-        "atualizado_em": (
-            datetime.fromtimestamp(caminho.stat().st_mtime).astimezone().isoformat()
-            if caminho.is_file()
-            else None
-        ),
+        "retrained_at": result.get("retrained_at"),
     }
 
 
-def ler_configuracao_treinamento(nome, campos):
-    caminho = DATA_DIR / nome
+def retraining_history(experiment_id, algorithm, current_result):
+    """Reconstrói cada retreino comparando a versão anterior com a resultante."""
+    root = DATA_DIR / "experimentos" / experiment_id / "historico_treinamentos"
+    archived = []
+    if root.is_dir():
+        for directory in sorted(root.glob(f"*-{algorithm}")):
+            result_path = directory / algorithm / "resultado.json"
+            if not result_path.is_file():
+                continue
+            try:
+                archived.append((directory.name, read_json(result_path)))
+            except (OSError, ValueError, json.JSONDecodeError):
+                continue
+    if not archived:
+        return []
+    versions = [result for _, result in archived] + [current_result]
+    events = []
+    for index in range(len(versions) - 1):
+        previous = versions[index]
+        resulting = versions[index + 1]
+        archive_name = archived[index][0]
+        events.append({
+            "sequence": index + 1,
+            "completed_at": resulting.get("retrained_at") or archive_name[:22],
+            "previous": _history_model_summary(previous),
+            "result": _history_model_summary(resulting),
+        })
+    return list(reversed(events[-20:]))
 
-    try:
-        arvore = ast.parse(
-            caminho.read_text(encoding="utf-8"),
-            filename=nome
+
+def experiment_payload(experiment_id):
+    artifacts = DATA_DIR / "experimentos" / experiment_id / "artefatos"
+    result = read_json(artifacts / "resultados.json")
+    result["configuration"] = read_json(artifacts / "configuracao.json")
+    result["features"] = read_json(artifacts / "features.json")
+    result["normalization"] = read_json(artifacts / "normalizacao.json")
+    for algorithm in ("bp", "ag"):
+        result["models"][algorithm]["diagnostic"]["series"] = read_diagnostic(
+            artifacts / algorithm / "diagnostico.csv"
         )
-    except (OSError, SyntaxError, UnicodeError):
-        return {}
-
-    valores = {}
-
-    for no in arvore.body:
-        if not isinstance(no, ast.Assign) or len(no.targets) != 1:
-            continue
-
-        alvo = no.targets[0]
-        if not isinstance(alvo, ast.Name) or alvo.id not in campos:
-            continue
-
-        try:
-            valores[alvo.id] = ast.literal_eval(no.value)
-        except (ValueError, TypeError):
-            continue
-
-    return valores
-
-
-def resumo_diagnostico(nome, eixo):
-    diagnostico = ler_csv(nome)
-    linhas = diagnostico["linhas"]
-
-    if not linhas:
-        return {
-            **diagnostico,
-            "final": None,
-            "ultima_melhoria": None,
-            "tempo_total": None,
-            "cpu_total": None
-        }
-
-    campo_sem_melhoria = (
-        "epocas_sem_melhoria"
-        if eixo == "epoca"
-        else "geracoes_sem_melhoria"
-    )
-    ultima_melhoria = linhas[0].get(eixo)
-
-    for linha in linhas[1:]:
-        melhoria = linha.get("melhoria")
-        if isinstance(melhoria, (int, float)) and melhoria > 1e-6:
-            ultima_melhoria = linha.get(eixo)
-
-    prefixo = "epoca" if eixo == "epoca" else "geracao"
-    campo_tempo = f"tempo_parede_{prefixo}_segundos"
-    campo_cpu = f"tempo_cpu_{prefixo}_segundos"
-    tempos = [
-        linha.get(campo_tempo)
-        for linha in linhas
-        if isinstance(linha.get(campo_tempo), (int, float))
-    ]
-    cpus = [
-        linha.get(campo_cpu)
-        for linha in linhas
-        if isinstance(linha.get(campo_cpu), (int, float))
-    ]
-
-    return {
-        **diagnostico,
-        "final": linhas[-1],
-        "ultima_melhoria": ultima_melhoria,
-        "sem_melhoria": linhas[-1].get(campo_sem_melhoria),
-        "tempo_total": sum(tempos) if tempos else None,
-        "tempo_medio": (
-            sum(tempos) / len(tempos)
-            if tempos else None
-        ),
-        "cpu_total": sum(cpus) if cpus else None,
-        "cpu_media": (
-            sum(cpus) / len(cpus)
-            if cpus else None
+        result["models"][algorithm]["retraining_history"] = retraining_history(
+            experiment_id, algorithm, result["models"][algorithm]
         )
-    }
-
-
-def resumo_dataset():
-    caminho = DATA_DIR / "requisicoes.csv"
-    rotulos = []
-
-    try:
-        with caminho.open("r", encoding="utf-8") as arquivo:
-            for linha in csv.reader(arquivo):
-                if linha:
-                    rotulos.append(int(float(linha[9])))
-    except (OSError, csv.Error, ValueError, IndexError):
-        return {"disponivel": False}
-
-    classes = Counter(rotulos)
-    treino = sum(int(quantidade * 0.70) for quantidade in classes.values())
-    validacao = sum(
-        int(quantidade * 0.15)
-        for quantidade in classes.values()
-    )
-
-    return {
-        "disponivel": True,
-        "total": len(rotulos),
-        "treino": treino,
-        "validacao": validacao,
-        "teste": len(rotulos) - treino - validacao,
-        "classes": dict(classes)
-    }
-
-
-def resumo_rede():
-    pesos = ler_json("pesos.json")
-
-    if not pesos["disponivel"]:
-        return {"disponivel": False}
-
-    rede = pesos["dados"].get("rede")
-    if not isinstance(rede, list) or len(rede) < 2:
-        return {"disponivel": False}
-
-    quantidade_pesos = sum(
-        (rede[indice] + 1) * rede[indice + 1]
-        for indice in range(len(rede) - 1)
-    )
-
-    return {
-        "disponivel": True,
-        "arquitetura": rede,
-        "entradas": rede[0],
-        "ocultos": rede[1] if len(rede) > 2 else None,
-        "saidas": rede[-1],
-        "quantidade_pesos": quantidade_pesos,
-        "bias": pesos["dados"].get("bias")
-    }
-
-
-def resumo_pesos(nome):
-    arquivo = ler_json(nome)
-    if not arquivo["disponivel"]:
-        return {"disponivel": False}
-
-    dados = arquivo["dados"]
-    rede = dados.get("rede")
-    matriz = dados.get("pesos")
-
-    if not isinstance(rede, list) or not isinstance(matriz, list):
-        return {"disponivel": False}
-
-    camadas = []
-    todos = []
-
-    try:
-        for camada in range(len(rede) - 1):
-            valores = [
-                float(matriz[linha][coluna][camada])
-                for linha in range(rede[camada] + 1)
-                for coluna in range(rede[camada + 1])
-            ]
-            todos.extend(valores)
-            camadas.append({
-                "magnitude_media": statistics.fmean(
-                    abs(valor) for valor in valores
-                ),
-                "media": statistics.fmean(valores),
-                "desvio": statistics.pstdev(valores),
-                "menor": min(valores),
-                "maior": max(valores)
-            })
-    except (IndexError, TypeError, ValueError, statistics.StatisticsError):
-        return {"disponivel": False}
-
-    return {
-        "disponivel": True,
-        "quantidade": len(todos),
-        "magnitude_media": statistics.fmean(
-            abs(valor) for valor in todos
-        ),
-        "desvio": statistics.pstdev(todos),
-        "menor": min(todos),
-        "maior": max(todos),
-        "camadas": camadas
-    }
+    return result
 
 
 def waf_online():
@@ -384,183 +128,304 @@ def waf_online():
         with socket.create_connection(("python_waf", 5000), timeout=0.4):
             return True
     except OSError:
-        return False
+        try:
+            with socket.create_connection(("127.0.0.1", 5000), timeout=0.2):
+                return True
+        except OSError:
+            return False
 
 
-def montar_dados():
-    configuracao_bp = ler_configuracao_treinamento(
-        "train_bp.py",
-        {"rede", "taxa", "epocas"}
-    )
-    configuracao_ag = ler_configuracao_treinamento(
-        "train_ga.py",
-        {
-            "rede",
-            "npop",
-            "geracoes",
-            "tipo_selecao",
-            "tipo_crossover",
-            "tipo_mutacao",
-            "rmin",
-            "rmax"
-        }
-    )
-
-    simulacao = SIMULATION_MANAGER.snapshot()
-    analise_features = build_feature_analysis(
-        EXTRACTOR_PATH,
-        DATA_DIR / "requisicoes.csv",
-        SIMULATION_MANAGER.feature_records(),
-    )
-
+def build_data():
     return {
-        "gerado_em": datetime.now().astimezone().isoformat(),
-        "waf": {"online": waf_online()},
-        "implantacao": ler_json("modelo_selecionado.json"),
-        "rede": resumo_rede(),
-        "pesos": {
-            "bp": resumo_pesos("pesos_bp.json"),
-            "ag": resumo_pesos("pesos_ag.json")
+        "generated_at": datetime.now().astimezone().isoformat(),
+        "waf": {
+            "online": waf_online(),
+            "primary_model": os.environ.get("WAF_PRIMARY_MODEL", "experimento_1:bp"),
+            "shadow_e1_algorithm": os.environ.get("WAF_SHADOW_E1_ALGORITHM", "bp"),
+            "shadow_e2_algorithm": os.environ.get("WAF_SHADOW_E2_ALGORITHM", "bp"),
         },
-        "dataset": resumo_dataset(),
-        "treinamento": {
-            "bp": configuracao_bp,
-            "ag": configuracao_ag
+        "experiments": {
+            "experimento_1": experiment_payload("experimento_1"),
+            "experimento_2": experiment_payload("experimento_2"),
         },
-        "diagnosticos": {
-            "bp": resumo_diagnostico("diagnostico_bp.csv", "epoca"),
-            "ag": resumo_diagnostico("diagnostico_ag.csv", "geracao")
-        },
-        "avaliacao": ler_json("avaliacao_modelos.json"),
-        "requisicoes": resumo_log_requisicoes(),
-        "simulacao": simulacao,
-        "analise_features": analise_features
     }
 
 
-class DashboardHandler(SimpleHTTPRequestHandler):
+def request_page(page=1, per_page=15):
+    path = DATA_DIR / "monitor_waf.csv"
+    page = max(int(page), 1)
+    per_page = min(max(int(per_page), 1), 50)
+    rows = []
+    if path.is_file():
+        with path.open("r", encoding="utf-8", newline="") as stream:
+            rows = [
+                {key: number(value) for key, value in row.items()}
+                for row in csv.DictReader(stream)
+            ]
+    rows.reverse()
+    total = len(rows)
+    pages = max((total + per_page - 1) // per_page, 1)
+    page = min(page, pages)
+    offset = (page - 1) * per_page
+    blocked = sum(row.get("operational_decision") == "BLOQUEIA" for row in rows)
+    disagreements = sum(row.get("e1_decision") != row.get("e2_decision") for row in rows)
+    return {
+        "page": page,
+        "per_page": per_page,
+        "pages": pages,
+        "total": total,
+        "items": rows[offset:offset + per_page],
+        "summary": {
+            "total": total,
+            "allowed": total - blocked,
+            "blocked": blocked,
+            "disagreements": disagreements,
+        },
+        "updated_at": (
+            datetime.fromtimestamp(path.stat().st_mtime).astimezone().isoformat()
+            if path.is_file() else None
+        ),
+    }
 
+
+def clear_request_history():
+    """Limpa exclusivamente o histórico de runtime; artefatos são somente leitura lógica."""
+    path = DATA_DIR / "monitor_waf.csv"
+    if path.is_file():
+        with path.open("w", encoding="utf-8", newline=""):
+            pass
+    return {"cleared": True}
+
+
+def reserved_index():
+    """Indexa apenas offsets/IDs; o arquivo bruto permanece imutável."""
+    global _RESERVED_INDEX
+    if _RESERVED_INDEX is not None:
+        return _RESERVED_INDEX
+    with _RESERVED_INDEX_LOCK:
+        if _RESERVED_INDEX is not None:
+            return _RESERVED_INDEX
+        groups = {}
+        records = {}
+        offset = 0
+        for line in RESERVED_DATA_PATH.read_bytes().splitlines(keepends=True):
+            record = json.loads(line)
+            label = int(record["label"])
+            method = str(record["method"]).upper()
+            record_id = str(record["record_id"])
+            groups.setdefault((label, method), []).append(offset)
+            records[record_id] = offset
+            offset += len(line)
+        _RESERVED_INDEX = {"groups": groups, "records": records}
+    return _RESERVED_INDEX
+
+
+def read_reserved_offset(offset):
+    with RESERVED_DATA_PATH.open("rb") as stream:
+        stream.seek(offset)
+        return json.loads(stream.readline())
+
+
+def read_reserved_offsets(offsets):
+    records = []
+    with RESERVED_DATA_PATH.open("rb") as stream:
+        for offset in offsets:
+            stream.seek(offset)
+            records.append(json.loads(stream.readline()))
+    return records
+
+
+def reserved_public_record(record):
+    body = base64.b64decode(record.get("body_base64", "")).decode("latin-1")
+    return {
+        "record_id": record["record_id"],
+        "source_sequence": record["source_sequence"],
+        "expected_class": "ATAQUE" if int(record["label"]) else "NORMAL",
+        "expected_decision": "BLOQUEIA" if int(record["label"]) else "LIBERA",
+        "method": record["method"],
+        "target": record["target"],
+        "path": record["path"],
+        "query": record["query"],
+        "content_type": record.get("content_type"),
+        "body_preview": body[:1000],
+        "body_truncated": len(body) > 1000,
+    }
+
+
+def reserved_samples(label, method="", limit=20):
+    label = int(label)
+    if label not in (0, 1):
+        raise ValueError("Classe reservada inválida")
+    method = str(method).upper().strip()
+    limit = min(max(int(limit), 1), 30)
+    index = reserved_index()
+    methods = sorted({key_method for key_label, key_method in index["groups"] if key_label == label})
+    offsets = []
+    for available_method in methods:
+        if not method or available_method == method:
+            offsets.extend(index["groups"][(label, available_method)])
+    if method and method not in methods:
+        raise ValueError("Método não disponível para esta classe")
+    chosen = _RANDOM.sample(offsets, min(limit, len(offsets)))
+    return {
+        "source": "CSIC 2010 — conjunto reservado externo aos experimentos",
+        "label": label,
+        "expected_class": "ATAQUE" if label else "NORMAL",
+        "available_methods": methods,
+        "available_count": len(offsets),
+        "items": [reserved_public_record(record) for record in read_reserved_offsets(chosen)],
+    }
+
+
+def reserved_record(record_id):
+    offset = reserved_index()["records"].get(str(record_id))
+    if offset is None:
+        raise ValueError("Requisição reservada não encontrada")
+    return read_reserved_offset(offset)
+
+
+def replay_reserved(record_id):
+    record = reserved_record(record_id)
+    body = base64.b64decode(record.get("body_base64", ""))
+    raw_path = record.get("path") or "/"
+    if record.get("query"):
+        raw_path = f"{raw_path}?{record['query']}"
+    path = urllib.parse.quote_from_bytes(
+        raw_path.encode("latin-1"), safe="/?&=;%:+,$@!()*'~-._"
+    )
+    allowed_headers = {
+        "user-agent", "pragma", "cache-control", "accept", "accept-charset",
+        "accept-language", "cookie", "content-type",
+    }
+    headers = {}
+    for name, values in record.get("headers", {}).items():
+        value = ", ".join(str(item) for item in values)
+        if name.lower() in allowed_headers and "\r" not in value and "\n" not in value:
+            headers[name] = value
+    headers["Host"] = "localhost:8080"
+    hosts = [
+        (os.environ.get("WAF_GATEWAY_HOST", "nginx"), int(os.environ.get("WAF_GATEWAY_PORT", "80"))),
+        ("127.0.0.1", 8080),
+    ]
+    last_error = None
+    for host, port in hosts:
+        connection = http.client.HTTPConnection(host, port, timeout=8)
+        try:
+            connection.request(record["method"], path, body=body or None, headers=headers)
+            response = connection.getresponse()
+            response.read()
+            return {
+                "record": reserved_public_record(record),
+                "status_http": response.status,
+            }
+        except OSError as error:
+            last_error = error
+        finally:
+            connection.close()
+    raise OSError(f"WAF indisponível para replay reservado: {last_error}")
+
+
+def training_api(method, path, payload=None):
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8") if payload is not None else None
+    headers = {
+        "X-Training-Token": os.environ.get("WAF_TRAINING_TOKEN", "local-academic-training"),
+    }
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    hosts = [
+        (os.environ.get("WAF_API_HOST", "python_waf"), int(os.environ.get("WAF_API_PORT", "5000"))),
+        ("127.0.0.1", 5000),
+    ]
+    last_error = None
+    for host, port in hosts:
+        connection = http.client.HTTPConnection(host, port, timeout=10)
+        try:
+            connection.request(method, path, body=body, headers=headers)
+            response = connection.getresponse()
+            response_body = response.read()
+            data = json.loads(response_body) if response_body else {}
+            return data, response.status
+        except OSError as error:
+            last_error = error
+        finally:
+            connection.close()
+    raise OSError(f"Serviço de treinamento indisponível: {last_error}")
+
+
+class DashboardHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            directory=str(DASHBOARD_DIR),
-            **kwargs
-        )
+        super().__init__(*args, directory=str(DASHBOARD_DIR), **kwargs)
 
     def do_GET(self):
         parsed = urllib.parse.urlsplit(self.path)
-        caminho = parsed.path
         query = urllib.parse.parse_qs(parsed.query)
-
-        if caminho == "/api/data":
-            self.enviar_json(montar_dados())
-            return
-
-        if caminho == "/api/health":
-            self.enviar_json({"status": "ok"})
-            return
-
         try:
-            if caminho == "/api/requests":
-                self.enviar_json(pagina_log_requisicoes(
-                    query.get("inicio", [None])[0],
-                    query.get("fim", [None])[0],
-                    query.get("pagina", [1])[0],
-                    query.get("por_pagina", [10])[0],
+            if parsed.path == "/api/data":
+                return self.send_json(build_data())
+            if parsed.path == "/api/requests":
+                return self.send_json(request_page(
+                    query.get("page", [1])[0], query.get("per_page", [15])[0]
                 ))
-                return
-
-            if caminho == "/api/simulation/history":
-                self.enviar_json(SIMULATION_MANAGER.history_page(
-                    query.get("pagina", [1])[0],
-                    query.get("por_pagina", [10])[0],
+            if parsed.path == "/api/reserved":
+                return self.send_json(reserved_samples(
+                    query.get("label", [0])[0],
+                    query.get("method", [""])[0],
+                    query.get("limit", [20])[0],
                 ))
-                return
-
-            if caminho == "/api/simulation/examples":
-                self.enviar_json(SIMULATION_MANAGER.example_list(
-                    query.get("resultado", [""])[0]
-                ))
-                return
-
-            if caminho == "/api/simulation/example":
-                self.enviar_json(SIMULATION_MANAGER.example(
-                    query.get("id", [""])[0]
-                ))
-                return
-        except (CSICError, OSError, ValueError, TypeError, csv.Error) as erro:
-            self.enviar_json({"erro": str(erro)}, status=400)
-            return
-
-        super().do_GET()
+            if parsed.path == "/api/training/status":
+                job_id = query.get("job_id", [""])[0]
+                if not job_id.isalnum():
+                    raise ValueError("Identificador de treinamento inválido")
+                data, status = training_api("GET", f"/__training/status/{job_id}")
+                return self.send_json(data, status=status)
+            if parsed.path == "/api/training/active":
+                data, status = training_api("GET", "/__training/active")
+                return self.send_json(data, status=status)
+            if parsed.path == "/api/health":
+                return self.send_json({"status": "ok"})
+        except (OSError, ValueError, TypeError, json.JSONDecodeError, csv.Error) as error:
+            return self.send_json({"error": str(error)}, status=500)
+        return super().do_GET()
 
     def do_POST(self):
-        caminho = self.path.split("?", 1)[0]
-        if caminho != "/api/simulation/start":
-            self.send_error(404)
-            return
-
+        parsed = urllib.parse.urlsplit(self.path)
         try:
-            tamanho = int(self.headers.get("Content-Length", "0"))
-            if not 0 < tamanho <= 4096:
-                raise ValueError("Corpo JSON ausente ou muito grande.")
-            payload = json.loads(self.rfile.read(tamanho).decode("utf-8"))
-            SIMULATION_MANAGER.start(
-                payload.get("modo"),
-                payload.get("quantidade"),
-                payload.get("monitor_ativo") is True,
-            )
-            self.enviar_json(
-                SIMULATION_MANAGER.snapshot(),
-                status=202,
-            )
-        except (CSICError, ValueError, TypeError, json.JSONDecodeError) as erro:
-            self.enviar_json(
-                {"erro": str(erro)},
-                status=400,
-            )
+            if parsed.path == "/api/requests/clear":
+                return self.send_json(clear_request_history())
+            if parsed.path not in {"/api/reserved/execute", "/api/training/start"}:
+                return self.send_json({"error": "Endpoint não encontrado"}, status=404)
+            length = int(self.headers.get("Content-Length", "0"))
+            if length <= 0 or length > 16_384:
+                raise ValueError("Corpo da requisição inválido")
+            payload = json.loads(self.rfile.read(length))
+            if parsed.path == "/api/training/start":
+                data, status = training_api("POST", "/__training/start", payload)
+                return self.send_json(data, status=status)
+            return self.send_json(replay_reserved(payload.get("record_id", "")))
+        except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
+            return self.send_json({"error": str(error)}, status=400)
+
+    def send_json(self, data, status=200):
+        body = json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def end_headers(self):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header(
             "Content-Security-Policy",
-            "default-src 'self'; "
-            "script-src 'self'; "
-            "style-src 'self'; "
-            "img-src 'self' data:; "
-            "connect-src 'self'; "
-            "object-src 'none'; "
-            "base-uri 'none'; "
-            "frame-ancestors 'none'"
+            "default-src 'self'; script-src 'self'; style-src 'self'; "
+            "connect-src 'self'; img-src 'self' data:; object-src 'none'; "
+            "base-uri 'none'; frame-ancestors 'none'",
         )
         super().end_headers()
 
-    def enviar_json(self, dados, status=200):
-        corpo = json.dumps(
-            dados,
-            ensure_ascii=False,
-            allow_nan=False
-        ).encode("utf-8")
-
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("Content-Length", str(len(corpo)))
-        self.end_headers()
-        self.wfile.write(corpo)
-
-    def log_message(self, formato, *args):
-        print(
-            f"[{self.log_date_time_string()}] {formato % args}",
-            flush=True
-        )
-
 
 if __name__ == "__main__":
-    servidor = ThreadingHTTPServer((HOST, PORT), DashboardHandler)
-    print(
-        f"Dashboard disponivel na porta {PORT}",
-        flush=True
-    )
-    servidor.serve_forever()
+    print(f"Dashboard disponível na porta {PORT}", flush=True)
+    ThreadingHTTPServer((HOST, PORT), DashboardHandler).serve_forever()

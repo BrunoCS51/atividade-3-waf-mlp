@@ -3,502 +3,114 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Painel técnico do WAF com MLP">
-  <title>WAF MLP — Observatório técnico</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="Monitor comparativo do WAF com MLP">
+  <title>WAF + MLP · Monitor comparativo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231768d7'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Arial' font-size='34' font-weight='700' fill='white'%3EW%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?v=20260924-authors1">
 </head>
 <body>
-  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-
+  <canvas id="network-background" aria-hidden="true"></canvas>
+  <a class="skip-link" href="#monitor">Ir para o monitor</a>
   <header class="topbar">
-    <a class="brand" href="#visao-geral" aria-label="Ir para visão geral">
-      <span class="brand-mark" aria-hidden="true">W</span>
-      <span>
-        <strong>WAF com Machine Learning</strong>
-        <small>Monitoramento, Diagnóstico e Avaliação</small>
-      </span>
-    </a>
-
-    <div class="academic-meta" aria-label="Identificação acadêmica">
-      <span class="academic-author">Bruno Sousa de Castro <b>· RA 5132956</b></span>
-      <span>Inteligência Artificial e Ciência de Dados</span>
-      <span class="academic-detail">Atividade avaliativa — Machine Learning · Prof. Me. Mateus de Souza Valente</span>
-    </div>
-
-    <nav class="nav" aria-label="Navegação principal">
-      <a class="nav-link active" href="#visao-geral" aria-current="location">Visão geral</a>
-      <a class="nav-link" href="#modelos">Modelos e diagnóstico</a>
-      <a class="nav-link" href="#monitor-waf">Monitor WAF</a>
-    </nav>
-
-    <div class="topbar-actions">
-      <span id="sync-status" class="sync-status" role="status" aria-live="polite">Carregando dados…</span>
-      <button id="refresh-button" class="button button-secondary" type="button">
-        Atualizar dados
-      </button>
+    <div class="topbar-inner">
+      <a class="brand" href="#monitor"><span class="brand-mark">W</span><span>WAF + MLP<small>Laboratório de Detecção de Ataques Web</small></span></a>
+      <span class="academic-id"><span><strong>Bruno Sousa de Castro</strong><small>RA 5132956</small></span><b aria-hidden="true">+</b><span><strong>Dener Reis Menezes</strong><small>RA 5170343</small></span><b aria-hidden="true">|</b><span><strong>Prof. Me. Mateus Valente</strong><small>Professor</small></span></span>
+      <nav aria-label="Navegação principal">
+        <a class="nav-link active" href="#monitor" aria-current="location">Monitor</a>
+        <a class="nav-link" href="#experimentos">Experimentos</a>
+      </nav>
+      <span id="sync" class="sync">Carregando…</span>
     </div>
   </header>
 
-  <main id="conteudo">
-    <section id="visao-geral" class="section hero-section" aria-labelledby="overview-title">
-      <div class="section-heading hero-heading">
-        <div>
-          <p class="eyebrow">Estado operacional</p>
-          <h1 id="overview-title">Segurança e aprendizado, em uma única leitura</h1>
-          <p class="lede">
-            Uma visão do modelo implantado, do caminho de decisão do WAF e do
-            ciclo experimental que levou a rede até produção.
-          </p>
-        </div>
-        <div class="status-panel">
-          <span id="waf-status-dot" class="status-dot neutral" aria-hidden="true"></span>
-          <div>
-            <small>Status do WAF</small>
-            <strong id="waf-status">Verificando…</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="overview-grid">
-        <article class="card deployment-card">
-          <div class="card-label">Implantação atual</div>
-          <div class="deployment-main">
-            <div>
-              <span class="model-badge" id="deployed-model">N/D</span>
-              <h2 id="deployed-method">Modelo não disponível</h2>
-            </div>
-            <div class="threshold-display">
-              <small>Threshold</small>
-              <strong id="deployed-threshold">N/D</strong>
-            </div>
-          </div>
-          <dl class="definition-list compact">
-            <div><dt>Última seleção</dt><dd id="last-selection">Não disponível</dd></div>
-            <div><dt>Critério</dt><dd id="selection-reason">Não disponível</dd></div>
-          </dl>
-        </article>
-
-        <article class="card architecture-card">
-          <div class="card-label">Arquitetura da rede</div>
-          <div id="network-architecture" class="network-mini" aria-label="Arquitetura da rede">
-            <span>—</span><i></i><span>—</span><i></i><span>—</span>
-          </div>
-          <dl class="definition-list compact four-columns">
-            <div><dt>Entradas</dt><dd id="network-inputs">N/D</dd></div>
-            <div><dt>Ocultos</dt><dd id="network-hidden">N/D</dd></div>
-            <div><dt>Saída</dt><dd id="network-output">N/D</dd></div>
-            <div><dt>Pesos</dt><dd id="network-weights">N/D</dd></div>
-          </dl>
-        </article>
-
-        <article class="card dataset-card">
-          <div class="card-label">Dataset estratificado</div>
-          <div class="dataset-total"><strong id="dataset-total">N/D</strong><span>amostras</span></div>
-          <div class="split-bar" aria-label="Divisão do dataset">
-            <span class="split-train"></span>
-            <span class="split-validation"></span>
-            <span class="split-test"></span>
-          </div>
-          <div class="split-legend">
-            <span><i class="legend-train"></i>Treino <strong id="dataset-train">N/D</strong></span>
-            <span><i class="legend-validation"></i>Validação <strong id="dataset-validation">N/D</strong></span>
-            <span><i class="legend-test"></i>Teste <strong id="dataset-test">N/D</strong></span>
-          </div>
-        </article>
-
-        <article class="card metrics-card">
-          <div class="card-label">Modelo implantado · validação</div>
-          <div class="metric-row">
-            <div><small>Acurácia</small><strong id="overview-accuracy">N/D</strong></div>
-            <div><small>Precisão</small><strong id="overview-precision">N/D</strong></div>
-            <div><small>Recall</small><strong id="overview-recall">N/D</strong></div>
-            <div><small>F1</small><strong id="overview-f1">N/D</strong></div>
-          </div>
-        </article>
-      </div>
-
-      <div class="flow-block">
-        <div class="flow-header">
-          <div>
-            <p class="eyebrow">Fluxo A</p>
-            <h2>Decisão de uma requisição no WAF</h2>
-          </div>
-          <p>Inferência em tempo de execução — sem treinamento.</p>
-        </div>
-        <div id="waf-flow" class="waf-flow" aria-label="Fluxo de funcionamento do WAF">
-          <div class="flow-node"><small>Entrada</small><strong>Requisição HTTP</strong></div>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <div class="flow-node"><small>Proxy</small><strong>Nginx</strong></div>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <div class="flow-node"><small>Extração</small><strong>9 features</strong></div>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <div class="flow-node accent"><small id="flow-model">MLP</small><strong>Cálculo de risco</strong></div>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <div class="flow-node"><small>Regra</small><strong id="flow-threshold">Risco &gt; N/D</strong></div>
-          <span class="flow-arrow split" aria-hidden="true">↗<br>↘</span>
-          <div class="flow-outcomes">
-            <span id="outcome-safe" class="outcome safe"><strong>Liberada</strong><small>HTTP 200</small></span>
-            <span id="outcome-blocked" class="outcome blocked"><strong>Bloqueada</strong><small>HTTP 403</small></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="flow-block development-flow">
-        <div class="flow-header">
-          <div>
-            <p class="eyebrow">Fluxo B</p>
-            <h2>Desenvolvimento e congelamento do modelo</h2>
-          </div>
-          <p>Teste final permanece isolado das decisões experimentais.</p>
-        </div>
-        <ol class="process-timeline">
-          <li><span>01</span><strong>Dataset</strong><small>Leitura e normalização</small></li>
-          <li><span>02</span><strong>Split</strong><small>Treino · validação · teste</small></li>
-          <li><span>03</span><strong>BP × AG</strong><small>Treinamento e diagnóstico</small></li>
-          <li><span>04</span><strong>Validação</strong><small>Threshold e custo</small></li>
-          <li><span>05</span><strong>Seleção</strong><small>Modelo congelado</small></li>
-          <li><span>06</span><strong>Teste final</strong><small>Avaliação sem retorno</small></li>
-          <li><span>07</span><strong>WAF</strong><small>Implantação</small></li>
-        </ol>
-      </div>
-    </section>
-
-    <section id="modelos" class="section" aria-labelledby="models-title">
+  <main>
+    <section id="monitor" class="section monitor-section">
       <div class="section-heading">
-        <div>
-          <p class="eyebrow">Machine Learning</p>
-          <h2 id="models-title">Modelos e diagnóstico</h2>
-          <p>Leitura comparável de BP e AG, sem combinar diagnóstico interno com avaliação classificatória.</p>
+        <div><span class="eyebrow">Operação em tempo real</span><h1>Monitor WAF</h1></div>
+        <div class="monitor-heading-actions">
+          <button id="clear-history" class="clear-history-button" type="button">Limpar histórico</button>
+          <div class="runtime-state"><i id="status-dot"></i><span><small>Serviço</small><strong id="waf-status">Verificando</strong></span></div>
         </div>
       </div>
+      <div class="primary-banner">
+        <div class="primary-identity">
+          <small>Modelo principal</small>
+          <div><strong id="primary-model">—</strong><span class="operational-badge">Decisão operacional</span></div>
+        </div>
+        <div class="shadow-note"><span aria-hidden="true">⇢</span><p><strong>Comparação shadow ativa</strong>O outro experimento é avaliado em paralelo, sem alterar a resposta HTTP.</p></div>
+      </div>
+      <div class="stats">
+        <article><span class="stat-icon" aria-hidden="true">Σ</span><div><small>Observadas</small><strong id="total">0</strong></div></article>
+        <article class="safe"><span class="stat-icon" aria-hidden="true">✓</span><div><small>Liberadas</small><strong id="allowed">0</strong></div></article>
+        <article class="danger"><span class="stat-icon" aria-hidden="true">×</span><div><small>Bloqueadas</small><strong id="blocked">0</strong></div></article>
+        <article class="accent"><span class="stat-icon" aria-hidden="true">≠</span><div><small>Divergências E1 × E2</small><strong id="disagreements">0</strong></div></article>
+      </div>
 
-      <ol class="experiment-steps" aria-label="Etapas do experimento de Machine Learning">
-        <li class="complete"><span>1</span><strong>Configuração</strong></li>
-        <li class="complete"><span>2</span><strong>Treinamento</strong></li>
-        <li class="complete"><span>3</span><strong>Evolução</strong></li>
-        <li class="complete"><span>4</span><strong>Diagnóstico</strong></li>
-        <li class="complete"><span>5</span><strong>Validação</strong></li>
-        <li class="complete"><span>6</span><strong>Seleção</strong></li>
-        <li class="complete"><span>7</span><strong>Teste final</strong></li>
-      </ol>
-
-      <div class="model-comparison">
-        <article class="model-panel" id="bp-panel">
-          <div class="model-panel-heading">
-            <div><span class="method-code">BP</span><h3>Backpropagation</h3></div>
-            <span id="bp-availability" class="availability">Carregando</span>
-          </div>
-          <div class="panel-stage"><span>01–02</span> Configuração e treinamento</div>
-          <div id="bp-training-stats" class="info-grid"></div>
-          <div class="panel-stage"><span>03</span> Evolução</div>
-          <div class="chart-card">
-            <div class="chart-heading"><h4>Curva de aprendizado</h4><span>MSE por época</span></div>
-            <canvas id="bp-chart" height="240" aria-label="Curva de MSE do Backpropagation"></canvas>
-          </div>
-          <div class="panel-stage"><span>04</span> Diagnóstico</div>
-          <div id="bp-diagnostics" class="diagnostic-grid"></div>
-          <div class="neuron-block">
-            <div class="chart-heading"><h4>Utilização da camada oculta</h4><span>10 neurônios</span></div>
-            <div id="hidden-neurons" class="neuron-grid"></div>
-          </div>
+      <div class="monitor-tools">
+        <article class="panel manual-test-panel">
+          <div class="panel-head"><div><span class="panel-kicker">Validação controlada</span><h2>Teste de requisição</h2><p>Escreva uma URL ou escolha uma requisição que nunca participou dos experimentos.</p></div></div>
+          <form id="manual-test-form" class="manual-form">
+            <div class="test-source-tabs" role="tablist" aria-label="Origem da requisição">
+              <button class="test-source-tab active" type="button" data-test-source="manual" aria-selected="true">Escrever URL</button>
+              <button class="test-source-tab" type="button" data-test-source="reserved" aria-selected="false">Escolher da reserva CSIC</button>
+            </div>
+            <section id="manual-fields" class="form-grid test-source-panel">
+              <label><span>Classe esperada</span><select id="expected-class"><option value="NORMAL">Normal / Benigna</option><option value="ATAQUE">Ataque / Maliciosa</option></select></label>
+              <label><span>Método</span><select id="test-method"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option></select></label>
+              <label class="field-wide"><span>URL ou caminho completo</span><input id="test-url" value="/?pagina=inicial" maxlength="1000" autocomplete="off" required placeholder="Ex.: /produto?id=10 ou http://localhost:8080/produto?id=10"></label>
+              <label id="body-field" class="field-wide" hidden><span>Body</span><textarea id="test-body" rows="3" maxlength="4000" placeholder="Dados do corpo da requisição"></textarea></label>
+            </section>
+            <section id="reserved-fields" class="form-grid test-source-panel" hidden>
+              <label><span>Classe conhecida</span><select id="reserved-class"><option value="0">Normal / Benigna</option><option value="1">Ataque / Maliciosa</option></select></label>
+              <label><span>Método da base</span><select id="reserved-method"><option value="">Todos os métodos</option></select></label>
+              <label class="field-wide"><span>Requisição reservada</span><select id="reserved-request"><option value="">Carregando reserva…</option></select></label>
+              <div class="reserved-toolbar field-wide"><span id="reserved-count">Consultando conjunto reservado…</span><button id="refresh-reserved" class="button-secondary" type="button">Sortear outras</button></div>
+              <div id="reserved-preview" class="reserved-preview field-wide">Selecione uma requisição para visualizar método, URL e conteúdo.</div>
+            </section>
+            <div class="send-options">
+              <label><span>Envios sequenciais da mesma requisição</span><select id="repeat-count"><option value="1">1 vez</option><option value="5">5 vezes</option><option value="10">10 vezes</option><option value="20">20 vezes</option><option value="50">50 vezes</option><option value="100">100 vezes</option><option value="500">500 vezes</option></select></label>
+              <small>A repetição mantém o histórico temporal; o request rate evolui naturalmente.</small>
+            </div>
+            <div class="form-actions"><span id="manual-test-status" role="status" aria-live="polite">Nenhum teste enviado nesta sessão.</span><button id="send-test" class="button-primary" type="submit">Enviar requisição de teste</button></div>
+          </form>
         </article>
 
-        <article class="model-panel" id="ag-panel">
-          <div class="model-panel-heading">
-            <div><span class="method-code alternate">AG</span><h3>Algoritmo Genético</h3></div>
-            <span id="ag-availability" class="availability">Carregando</span>
-          </div>
-          <div class="panel-stage"><span>01–02</span> Configuração e treinamento</div>
-          <div id="ag-training-stats" class="info-grid"></div>
-          <div class="panel-stage"><span>03</span> Evolução</div>
-          <div class="chart-card">
-            <div class="chart-heading"><h4>Evolução do fitness</h4><span>MSE por geração</span></div>
-            <canvas id="ag-chart" height="240" aria-label="Curva de MSE do Algoritmo Genético"></canvas>
-          </div>
-          <div class="panel-stage"><span>04</span> Diagnóstico</div>
-          <div id="ag-diagnostics" class="diagnostic-grid"></div>
+        <article class="panel latest-panel">
+          <div class="panel-head"><div><span class="panel-kicker">Comparação rotulada</span><h2>Última requisição</h2><p>Esperado × resultado observado pelos dois experimentos.</p></div></div>
+          <div id="latest-request-content" class="latest-request-empty">Envie um teste manual para visualizar a comparação detalhada.</div>
         </article>
       </div>
 
-      <div class="subsection-heading">
-        <div><p class="eyebrow">Avaliação classificatória</p><h3>Validação</h3></div>
-        <p>Base exclusiva para threshold e seleção automática.</p>
-      </div>
-      <div id="validation-evaluations" class="evaluation-grid"></div>
-
-      <article class="selection-panel">
-        <div class="selection-copy">
-          <p class="eyebrow">Decisão de implantação</p>
-          <h3>Seleção automática</h3>
-          <p class="formula">C = α<sub>FN</sub> × FN + β<sub>FP</sub> × FP</p>
-          <p class="note">Os coeficientes são parâmetros experimentais configuráveis, não valores universais de segurança.</p>
-          <dl class="definition-list selection-parameters">
-            <div><dt>α FN</dt><dd id="alpha-fn">N/D</dd></div>
-            <div><dt>β FP</dt><dd id="beta-fp">N/D</dd></div>
-          </dl>
-        </div>
-        <div id="selection-candidates" class="candidate-comparison"></div>
-        <div class="selected-result">
-          <small>Modelo selecionado</small>
-          <strong id="selected-model">N/D</strong>
-          <span id="selected-threshold">Threshold N/D</span>
-          <p id="selected-reason">Seleção ainda não disponível.</p>
-        </div>
-      </article>
-
-      <div class="subsection-heading test-heading">
-        <div><p class="eyebrow">Avaliação congelada</p><h3>Teste Final</h3></div>
-        <p>O conjunto de teste é utilizado apenas para avaliação final e não participa da escolha do modelo ou do threshold.</p>
-      </div>
-      <div id="test-evaluation" class="evaluation-grid single"></div>
-
-    </section>
-
-    <section id="monitor-waf" class="section section-tinted" aria-labelledby="monitor-title">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Telemetria segura</p>
-          <h2 id="monitor-title">Monitor WAF</h2>
-          <p>O monitor contabiliza as requisições processadas pelo WAF a partir do momento em que o monitoramento é iniciado.</p>
-        </div>
-      </div>
-
-      <article class="monitor-control-card">
-        <div class="monitor-state" role="status" aria-live="polite">
-          <span id="session-indicator" class="session-indicator idle" aria-hidden="true"></span>
-          <div>
-            <small>Sessão de demonstração</small>
-            <strong id="session-label">Monitoramento inativo</strong>
-            <span id="session-period">Nenhuma sessão de demonstração está sendo contabilizada.</span>
-          </div>
-        </div>
-        <div class="monitor-actions">
-          <div class="button-group">
-            <button id="start-monitor" class="button button-primary" type="button">Iniciar monitoramento</button>
-            <button id="stop-monitor" class="button button-secondary" type="button" disabled>Encerrar monitoramento</button>
-            <button id="save-session" class="button button-ghost" type="button" disabled>Salvar resumo</button>
-          </div>
-          <small>Os botões apenas controlam a janela de observação; nenhuma requisição é gerada.</small>
-        </div>
-      </article>
-
-      <div class="monitor-grid">
-        <article class="stat-card"><small>Requisições observadas</small><strong id="requests-total">0</strong></article>
-        <article class="stat-card safe"><small>Liberadas</small><strong id="requests-allowed">0</strong><span id="requests-allowed-percent">0%</span></article>
-        <article class="stat-card blocked"><small>Bloqueadas</small><strong id="requests-blocked">0</strong><span id="requests-blocked-percent">0%</span></article>
-        <article class="stat-card"><small>Risco médio</small><strong id="requests-risk-average">N/D</strong><span>na sessão exibida</span></article>
-      </div>
-
-      <article class="card table-card">
-        <div class="card-header">
-          <div>
-            <h3>HISTÓRICO DE REQUISIÇÕES</h3>
-            <p>O caminho é armazenado sem query string e limitado a 200 caracteres.</p>
-          </div>
-          <span id="requests-updated" class="metadata">Aguardando dados</span>
-        </div>
+      <article class="panel table-panel">
+        <div class="panel-head"><div><h2>Últimas requisições</h2><p>Uma linha, duas inferências e uma decisão efetiva.</p></div><span id="history-updated">Histórico vazio</span></div>
         <div class="table-scroll">
           <table>
-            <thead>
-              <tr>
-                <th>Horário</th>
-                <th>Método</th>
-                <th>Caminho sanitizado</th>
-                <th>Risco</th>
-                <th>Threshold</th>
-                <th>Decisão</th>
-                <th>Status</th>
-                <th>Rótulo real</th>
-                <th>Resultado</th>
-              </tr>
-            </thead>
-            <tbody id="requests-table">
-              <tr><td colspan="9" class="empty-cell">Nenhuma requisição registrada.</td></tr>
-            </tbody>
+            <thead><tr><th>Horário</th><th>Requisição</th><th>Esperado</th><th>Experimento 1</th><th>Experimento 2</th><th>Principal</th><th>HTTP</th></tr></thead>
+            <tbody id="request-rows"><tr><td colspan="7" class="empty">Aguardando requisições.</td></tr></tbody>
           </table>
         </div>
-        <div class="history-pagination" aria-label="Paginação do histórico">
-          <span id="history-range">Exibindo 0–0 de 0</span>
-          <div>
-            <button id="history-prev" class="button button-ghost" type="button" disabled>← Anterior</button>
-            <span id="history-page-status">Página 1 de 1</span>
-            <button id="history-next" class="button button-ghost" type="button" disabled>Próxima →</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="simulation-card">
-        <div class="simulation-intro">
-          <p class="eyebrow">Avaliação externa controlada</p>
-          <h3>Teste controlado — CSIC 2010</h3>
-          <p id="simulation-message">Verificando dataset e serviço local…</p>
-          <dl class="simulation-status-list">
-            <div><dt>Dataset</dt><dd id="simulation-dataset">Verificando…</dd></div>
-            <div><dt>WAF local</dt><dd id="simulation-service">Verificando…</dd></div>
-            <div><dt>Status</dt><dd id="simulation-status">Aguardando</dd></div>
-          </dl>
-          <p class="external-data-note">
-            Este conjunto CSIC 2010 é utilizado exclusivamente para avaliação externa controlada.
-            Ele não participou do treinamento, validação, teste interno ou seleção do modelo implantado.
-          </p>
-        </div>
-        <div class="simulation-workspace" aria-label="Controles da simulação CSIC 2010">
-          <div class="simulation-controls">
-            <fieldset class="mode-selector">
-              <legend>Modo</legend>
-              <label><input type="radio" name="simulation-mode" value="NORMAL"> Normais</label>
-              <label><input type="radio" name="simulation-mode" value="ATAQUE"> Ataques</label>
-              <label><input type="radio" name="simulation-mode" value="MISTO" checked> Misto</label>
-            </fieldset>
-            <label class="quantity-selector" for="simulation-quantity">
-              Quantidade total
-              <select id="simulation-quantity">
-                <option value="100" selected>100 requisições</option>
-                <option value="500">500 requisições</option>
-                <option value="1000">1.000 requisições</option>
-              </select>
-            </label>
-            <button id="start-simulation" class="button button-primary simulation-start" type="button" disabled>
-              Iniciar simulação
-            </button>
-          </div>
-
-          <p id="simulation-error" class="simulation-error" role="alert" hidden></p>
-
-          <div class="simulation-progress" aria-live="polite">
-            <div><strong id="simulation-progress-label">Aguardando execução</strong><span id="simulation-progress-count">0 / 0</span></div>
-            <progress id="simulation-progress" value="0" max="100">0%</progress>
-            <div class="simulation-live-counts">
-              <span>Normal <strong id="simulation-normal-count">0</strong></span>
-              <span>Ataque <strong id="simulation-attack-count">0</strong></span>
-              <span>Liberadas <strong id="simulation-allowed-count">0</strong></span>
-              <span>Bloqueadas <strong id="simulation-blocked-count">0</strong></span>
-            </div>
-          </div>
-
-          <div id="simulation-results" class="simulation-results" hidden>
-            <div class="simulation-result-heading">
-              <div>
-                <small>Resultado da avaliação externa controlada</small>
-                <strong>HTTP CSIC 2010</strong>
-              </div>
-              <span id="simulation-evaluated">0 avaliadas</span>
-            </div>
-
-            <div class="simulation-result-grid">
-              <div class="external-confusion" aria-label="Matriz de confusão da avaliação externa">
-                <span></span><span class="matrix-axis">Predito normal</span><span class="matrix-axis">Predito ataque</span>
-                <span class="matrix-axis">Real normal</span>
-                <div class="matrix-cell"><small>TN</small><strong id="simulation-tn">0</strong></div>
-                <div class="matrix-cell error"><small>FP</small><strong id="simulation-fp">0</strong></div>
-                <span class="matrix-axis">Real ataque</span>
-                <div class="matrix-cell error"><small>FN</small><strong id="simulation-fn">0</strong></div>
-                <div class="matrix-cell"><small>TP</small><strong id="simulation-tp">0</strong></div>
-              </div>
-
-              <div class="external-metrics">
-                <div><small>Accuracy</small><strong id="simulation-accuracy">0,00%</strong></div>
-                <div><small>Precision</small><strong id="simulation-precision">0,00%</strong></div>
-                <div><small>Recall</small><strong id="simulation-recall">0,00%</strong></div>
-                <div><small>F1-score</small><strong id="simulation-f1">0,00%</strong></div>
-                <div><small>False Positive Rate</small><strong id="simulation-fpr">0,00%</strong></div>
-                <div><small>False Negative Rate</small><strong id="simulation-fnr">0,00%</strong></div>
-              </div>
-            </div>
-            <p id="simulation-errors-summary" class="note"></p>
-          </div>
-
-          <div class="simulation-route" aria-label="Fluxo da simulação local">
-            <span>CSIC 2010</span><i>→</i><span>Parser seguro</span><i>→</i><span>Nginx local</span><i>→</i><span>WAF + MLP</span><i>→</i><span>Matriz e métricas</span>
-          </div>
-        </div>
-      </article>
-
-      <article id="feature-analysis" class="feature-analysis diagnostic-main-block" aria-labelledby="feature-analysis-title" hidden>
-        <div class="feature-analysis-heading">
-          <div>
-            <small>Diagnóstico observacional pós-simulação</small>
-            <h4 id="feature-analysis-title">ANÁLISE DAS CARACTERÍSTICAS</h4>
-            <p>Comparação entre a representação aprendida pela MLP e as características extraídas das requisições externas.</p>
-          </div>
-          <div class="feature-legend" aria-label="Legenda da comparação">
-            <span class="legend-original">Dataset original</span>
-            <span class="legend-csic">CSIC atual</span>
-            <span class="legend-clipping">Acima do limite</span>
-          </div>
-        </div>
-
-        <div class="diagnostic-table-wrap">
-          <table class="diagnostic-table">
-            <thead><tr><th>Feature</th><th>Tipo</th><th>Limite</th><th>Dataset original</th><th>CSIC atual</th></tr></thead>
-            <tbody id="feature-comparison-table"></tbody>
-          </table>
-        </div>
-
-        <div class="feature-detail-grid">
-          <article>
-            <h5>CSIC por rótulo real</h5>
-            <div class="diagnostic-table-wrap">
-              <table class="diagnostic-table compact">
-                <thead><tr><th>Feature</th><th>NORMAL</th><th>ATAQUE</th></tr></thead>
-                <tbody id="feature-class-table"></tbody>
-              </table>
-            </div>
-          </article>
-          <article>
-            <h5>IMPACTO DOS LIMITES DE NORMALIZAÇÃO</h5>
-            <div class="diagnostic-table-wrap">
-              <table class="diagnostic-table compact">
-                <thead><tr><th>Feature</th><th>Limite</th><th>Máx. original</th><th>Máx. CSIC</th><th>Original acima</th><th>CSIC acima / clipping</th></tr></thead>
-                <tbody id="feature-clipping-table"></tbody>
-              </table>
-            </div>
-          </article>
-        </div>
-
-        <article class="classification-examples">
-          <div>
-            <h5>EXEMPLOS DE CLASSIFICAÇÃO</h5>
-            <p>Selecione TN, FP, FN ou TP para inspecionar uma requisição sanitizada e as nove features que já foram usadas na decisão.</p>
-          </div>
-          <div class="example-filters" role="group" aria-label="Filtrar exemplos por resultado">
-            <button class="example-filter" data-result="TN" type="button">TN <strong id="example-count-tn">0</strong></button>
-            <button class="example-filter" data-result="FP" type="button">FP <strong id="example-count-fp">0</strong></button>
-            <button class="example-filter" data-result="FN" type="button">FN <strong id="example-count-fn">0</strong></button>
-            <button class="example-filter" data-result="TP" type="button">TP <strong id="example-count-tp">0</strong></button>
-          </div>
-          <label class="example-selector" for="diagnostic-example-select">
-            Requisição
-            <select id="diagnostic-example-select" disabled><option value="">Selecione um resultado acima</option></select>
-          </label>
-          <div id="example-detail" class="example-detail" hidden>
-            <dl id="example-metadata"></dl>
-            <div class="diagnostic-table-wrap">
-              <table class="diagnostic-table compact">
-                <thead><tr><th>Feature</th><th>Valor bruto</th><th>Limite</th><th>Normalizado</th><th>Clipping</th></tr></thead>
-                <tbody id="example-features-table"></tbody>
-              </table>
-            </div>
-          </div>
-          <p id="example-empty" class="note">Escolha uma categoria com exemplos disponíveis.</p>
-        </article>
+        <div class="pagination"><button id="prev" type="button">← Anterior</button><span id="page">Página 1 de 1</span><button id="next" type="button">Próxima →</button></div>
       </article>
     </section>
 
+    <section id="experimentos" class="section">
+      <div class="section-heading"><div><span class="eyebrow">Rodada oficial única</span><h2>Experimentos</h2><p>Mesma estrutura de leitura, particularidades preservadas.</p></div></div>
+      <div id="experiment-grid" class="experiment-grid" aria-live="polite"></div>
+    </section>
   </main>
-
-  <footer class="academic-footer">
-    <div>
-      <strong>WAF com Machine Learning</strong>
-      <span>Atividade acadêmica — Machine Learning</span>
-      <span>Inteligência Artificial e Ciência de Dados</span>
+  <dialog id="training-dialog" class="training-dialog" aria-labelledby="training-dialog-title">
+    <div class="training-dialog-head"><div><span class="panel-kicker">Execução controlada</span><h2 id="training-dialog-title">Treinamento em andamento</h2></div><button id="training-dialog-close" type="button" aria-label="Fechar" disabled>×</button></div>
+    <div class="training-dialog-body">
+      <div class="training-progress-track"><i id="training-progress-bar"></i></div>
+      <div class="training-progress-numbers"><strong id="training-progress-percent">0%</strong><span id="training-progress-step">Preparando…</span></div>
+      <p id="training-progress-message">Preparando dataset, split e normalização…</p>
+      <div class="training-time-grid"><span><small>Decorrido</small><strong id="training-elapsed">0 s</strong></span><span><small>Restante estimado</small><strong id="training-remaining">Calculando…</strong></span></div>
+      <p class="training-safety-note">A versão atual permanece disponível durante o processamento. Os artefatos anteriores são arquivados antes da substituição.</p>
+      <div id="training-result" class="training-result" hidden></div>
     </div>
-    <div class="footer-links">
-      <span>Dados externos de avaliação: HTTP CSIC 2010</span>
-      <a href="https://github.com/BrunoCS51/atividade-3-waf-mlp" target="_blank" rel="noreferrer">Repositório do projeto</a>
-    </div>
-  </footer>
-
-  <script src="app.js" defer></script>
+  </dialog>
+  <footer>Projeto acadêmico · Bruno Sousa de Castro e Dener Reis Menezes · Prof. Me. Mateus Valente · Artefatos oficiais carregados diretamente pelo dashboard</footer>
+  <script src="diagnostic-analysis.js?v=20260924-history1" defer></script>
+  <script src="app.js?v=20260924-history1" defer></script>
 </body>
 </html>

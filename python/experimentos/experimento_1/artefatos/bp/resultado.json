@@ -1,0 +1,98 @@
+{
+  "experiment_id": "experimento_1",
+  "algorithm": "bp",
+  "architecture": [
+    9,
+    10,
+    1
+  ],
+  "parameter_count": 111,
+  "seed": 42,
+  "parameters": {
+    "epochs": 100,
+    "learning_rate": 0.01,
+    "sample_shuffle_each_epoch": true,
+    "backward": "comportamento academico legado preservado",
+    "seed": 42
+  },
+  "threshold": 0.4700000000000001,
+  "threshold_source": "validacao",
+  "threshold_comparison": ">",
+  "training": {
+    "wall_seconds": 41.97446930001024,
+    "cpu_seconds": 41.34375
+  },
+  "metrics": {
+    "treino": {
+      "tn": 4542,
+      "fp": 9,
+      "fn": 2,
+      "tp": 2446,
+      "accuracy": 0.9984283469067009,
+      "precision": 0.9963340122199593,
+      "recall": 0.9991830065359477,
+      "f1": 0.9977564756271671,
+      "fpr": 0.001977587343441002,
+      "fnr": 0.0008169934640522876,
+      "threshold": 0.4700000000000001
+    },
+    "validacao": {
+      "tn": 973,
+      "fp": 2,
+      "fn": 0,
+      "tp": 524,
+      "accuracy": 0.9986657771847899,
+      "precision": 0.9961977186311787,
+      "recall": 1.0,
+      "f1": 0.9980952380952381,
+      "fpr": 0.0020512820512820513,
+      "fnr": 0.0,
+      "threshold": 0.4700000000000001,
+      "security_cost": 2.0,
+      "threshold_source": "validacao",
+      "security_cost_formula": "alpha_fn * FN + beta_fp * FP",
+      "alpha_fn": 10.0,
+      "beta_fp": 1.0
+    },
+    "teste": {
+      "tn": 974,
+      "fp": 2,
+      "fn": 0,
+      "tp": 526,
+      "accuracy": 0.9986684420772304,
+      "precision": 0.9962121212121212,
+      "recall": 1.0,
+      "f1": 0.9981024667931689,
+      "fpr": 0.0020491803278688526,
+      "fnr": 0.0,
+      "threshold": 0.4700000000000001
+    }
+  },
+  "diagnostic": {
+    "records": 100,
+    "final": {
+      "epoch": 100,
+      "online_mse_mean": 0.003026399472951425,
+      "train_mse_after_epoch": 0.002987305944994448,
+      "validation_mse": 0.003649164222078464,
+      "train_validation_gap": 0.0006618582770840159,
+      "wall_seconds": 0.41437759998370893,
+      "cpu_seconds": 0.421875,
+      "hidden_saturation_percentage": 12.643234747821117,
+      "layer_1_weight_abs_mean": 1.5515357828129805,
+      "layer_1_weight_std": 2.5603218359788897,
+      "layer_1_delta_abs_mean": 8.959352491123138e-06,
+      "layer_1_delta_abs_max": 0.009167021078401097,
+      "layer_2_weight_abs_mean": 1.4843250624478834,
+      "layer_2_weight_std": 2.198282318695787,
+      "layer_2_delta_abs_mean": 1.0918854990240456e-05,
+      "layer_2_delta_abs_max": 0.0014808184405006284
+    },
+    "path": "python/experimentos/experimento_1/artefatos/bp/diagnostico.csv"
+  },
+  "weights": {
+    "path": "python/experimentos/experimento_1/artefatos/bp/pesos.json",
+    "sha256": "c2fbd23ad89e030ab5580bdc42f32bb10f65b42a05d3b274a10769e2b5583390"
+  },
+  "test_used_for_threshold": false
+}

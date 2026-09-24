@@ -1,0 +1,9 @@
+{
+  "official_round": 1,
+  "completed_at": "2026-09-17T13:46:52.088670-03:00",
+  "models": [
+    "bp",
+    "ag"
+  ],
+  "second_run_blocked_by_default": true
+}
