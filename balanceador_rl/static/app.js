@@ -3,6 +3,7 @@
 const $ = (id) => document.getElementById(id);
 let state = null;
 let pollTimer = null;
+let interactivePollTimer = null;
 
 const number = (value, digits = 2) => Number(value || 0).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 const duration = (seconds) => `${Math.round(Number(seconds || 0))} s`;
@@ -76,10 +77,88 @@ function policyCard(title, result, winner) {
 function renderComparison(comparison) {
   if (!comparison) return;
   const rr = comparison.round_robin; const rl = comparison.q_learning;
-  const rlWinner = rl.timeouts < rr.timeouts || (rl.timeouts === rr.timeouts && rl.average_latency_ms < rr.average_latency_ms);
+  const verdict = comparison.verdict;
+  const rlWinner = verdict ? verdict.winner === "q_learning" : rl.timeouts < rr.timeouts || (rl.timeouts === rr.timeouts && rl.average_latency_ms < rr.average_latency_ms);
+  const rrWinner = verdict ? verdict.winner === "round_robin" : !rlWinner;
   $("comparison").className = "comparison";
-  $("comparison").innerHTML = policyCard("Round-Robin tradicional", rr, !rlWinner) + policyCard("Agente Q-Learning", rl, rlWinner);
-  $("compare-status").textContent = comparison.trained_q_table ? "Comparação feita com a Q-Table treinada." : "Atenção: comparação feita antes do treinamento.";
+  $("comparison").innerHTML = policyCard("Round-Robin tradicional", rr, rrWinner) + policyCard("Agente Q-Learning", rl, rlWinner);
+  const overload = comparison.conditions?.offered_over_capacity ? ` Sobrecarga intencional: concorrência acima do limite efetivo ${comparison.conditions.scenario_concurrency_limit}.` : "";
+  const conclusion = verdict?.equivalent ? `Resultados equivalentes: ${verdict.reason}.` : verdict ? `${verdict.winner === "q_learning" ? "Q-Learning" : "Round-Robin"}: ${verdict.reason}.` : "Comparação concluída.";
+  $("compare-status").textContent = conclusion + overload;
+}
+
+function readInteractiveLoads() {
+  return Object.fromEntries(["node1", "node2", "node3"].map((node) => [node, Number($(`load-${node}`).value)]));
+}
+
+function loadText(loads) {
+  return `N1 ${Math.round(loads.node1)}% · N2 ${Math.round(loads.node2)}% · N3 ${Math.round(loads.node3)}%`;
+}
+
+function activeText(counts) {
+  return `N1 ${counts.node1} · N2 ${counts.node2} · N3 ${counts.node3}`;
+}
+
+function drawInteractiveChart(records = []) {
+  const canvas = $("interactive-chart");
+  const ratio = Math.min(devicePixelRatio || 1, 2);
+  const width = Math.max(canvas.clientWidth, 300); const height = 260;
+  canvas.width = width * ratio; canvas.height = height * ratio;
+  const ctx = canvas.getContext("2d"); ctx.setTransform(ratio, 0, 0, ratio, 0, 0); ctx.clearRect(0, 0, width, height);
+  const pad = { left: 38, right: 12, top: 16, bottom: 28 };
+  ctx.font = "10px sans-serif"; ctx.fillStyle = "#7a8698"; ctx.strokeStyle = "#e3e8ef";
+  [0, 25, 50, 75, 100].forEach((value) => { const y = pad.top + (100 - value) / 100 * (height - pad.top - pad.bottom); ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(width - pad.right, y); ctx.stroke(); ctx.fillText(`${value}%`, 6, y + 3); });
+  if (!records.length) { ctx.fillText("A utilização de CPU aparecerá a cada decisão.", 65, height / 2); return; }
+  const colors = { node1: "#4f46e5", node2: "#e28b21", node3: "#c53c52" };
+  Object.entries(colors).forEach(([node, color]) => {
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+    records.forEach((record, index) => { const x = pad.left + index / Math.max(records.length - 1, 1) * (width - pad.left - pad.right); const y = pad.top + (100 - (record.cpu_after || record.loads_after)[node]) / 100 * (height - pad.top - pad.bottom); if (!index) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.stroke();
+  });
+  ctx.fillStyle = "#7a8698"; ctx.fillText("1", pad.left, height - 8); ctx.fillText(String(records.length), width - 28, height - 8);
+}
+
+function renderInteractive(simulation) {
+  const active = simulation?.status === "running";
+  const records = simulation?.records || [];
+  const latest = records.at(-1);
+  const loads = simulation?.loads || readInteractiveLoads();
+  const cpu = simulation?.cpu_utilization || loads;
+  const activeCounts = simulation?.active_counts || { node1: 0, node2: 0, node3: 0 };
+  $("interactive-start").disabled = active;
+  $("interactive-apply").disabled = !active;
+  $("interactive-stop").disabled = !active;
+  $("interactive-learning").disabled = active;
+  $("train").disabled = active || ["queued", "running"].includes(state?.training?.status);
+  $("compare").disabled = active;
+  $("interactive-badge").textContent = !simulation ? "Aguardando" : active ? "Executando" : simulation.status === "completed" ? "Concluída" : simulation.status === "stopped" ? "Interrompida" : "Falhou";
+  $("interactive-progress-bar").style.width = `${simulation?.percent || 0}%`;
+  $("interactive-progress-percent").textContent = `${Math.round(simulation?.percent || 0)}%`;
+  $("interactive-message").textContent = simulation?.message || "A Q-Table treinada será copiada para esta sessão.";
+  ["node1", "node2", "node3"].forEach((node) => {
+    const card = document.querySelector(`[data-live-node="${node}"]`);
+    const lastForNode = [...records].reverse().find((record) => record.action === node);
+    card.classList.toggle("selected", latest?.action === node);
+    card.classList.toggle("saturated", Boolean(simulation?.saturation?.[node]));
+    card.querySelector(".load-bar i").style.width = `${cpu[node]}%`;
+    card.querySelector("b").textContent = `${Math.round(cpu[node])}% CPU`;
+    card.querySelector("small").textContent = lastForNode ? `Latência: ${lastForNode.timeout ? "timeout" : `${number(lastForNode.latency_ms, 1)} ms`}` : "Latência: —";
+    card.querySelector("em").textContent = `Ativas: ${activeCounts[node]} · escolhas: ${simulation?.route_counts?.[node] || 0}`;
+    card.querySelector("mark").textContent = simulation?.saturation?.[node] ? "Saturado" : "Saudável";
+  });
+  if (latest) {
+    $("last-decision").textContent = `#${latest.request} · ${latest.action} por ${latest.mode === "exploracao" ? "exploração" : "explotação"}`;
+    const parts = latest.reward_parts || {};
+    const learningLabel = simulation?.learning_mode === "fixed" ? "Q fixa" : "Q atualizada";
+    $("last-decision-detail").textContent = `${latest.state.replaceAll("_", " ")} · CPU ${number(latest.selected?.cpu, 0)}% · ${latest.selected?.active_requests || 1} ativa(s) · ${number(latest.latency_ms, 1)} ms · R ${latest.reward >= 0 ? "+" : ""}${number(latest.reward, 1)} (latência ${parts.latency_reward ?? latest.reward}) · ${learningLabel} ${number(latest.q_before)} → ${number(latest.q_after)}`;
+  }
+  $("interactive-history").innerHTML = records.length ? [...records].reverse().slice(0, 30).map((record) => `<tr><td>${record.request}</td><td>${record.state.replace("carga_", "")}</td><td class="decision-action">${record.action}${record.selected?.saturated ? ' <span class="saturation-label">saturado</span>' : ""}</td><td>${record.mode === "exploracao" ? "exploração" : "explotação"}</td><td>${loadText(record.cpu_before || record.loads_before)}</td><td>${activeText(record.active_before || {node1:0,node2:0,node3:0})}</td><td>${record.timeout ? "timeout" : `${number(record.latency_ms, 1)} ms`}</td><td class="${record.reward >= 0 ? "reward-positive" : "reward-negative"}" title="Latência ${record.reward_parts?.latency_reward ?? record.reward}; CPU −${number(record.reward_parts?.cpu_penalty, 1)}; concorrência −${number(record.reward_parts?.concurrency_penalty, 1)}; saturação −${number(record.reward_parts?.saturation_penalty, 1)}">${record.reward >= 0 ? "+" : ""}${number(record.reward, 1)}</td><td>${number(record.q_before)} → ${number(record.q_after)}${record.q_updated ? " · atualizada" : " · fixa"}</td></tr>`).join("") : '<tr><td colspan="9">Nenhuma decisão registrada.</td></tr>';
+  drawInteractiveChart(records);
+  clearTimeout(interactivePollTimer);
+  if (active) interactivePollTimer = setTimeout(loadInteractive, 500);
+}
+
+async function loadInteractive() {
+  try { const simulation = await api(`/api/interactive?t=${Date.now()}`); if (state) state.interactive = simulation; renderInteractive(simulation); } catch (error) { $("interactive-message").textContent = error.message; }
 }
 
 async function loadInfrastructure() {
@@ -94,7 +173,7 @@ async function loadInfrastructure() {
 }
 
 async function loadStatus() {
-  try { state = await api("/api/status"); renderQTable(state); renderTraining(state); renderComparison(state.last_comparison); } catch (error) { $("progress-message").textContent = error.message; }
+  try { state = await api("/api/status"); renderQTable(state); renderTraining(state); renderComparison(state.last_comparison); renderInteractive(state.interactive); } catch (error) { $("progress-message").textContent = error.message; }
 }
 
 $("train").addEventListener("click", async () => {
@@ -112,5 +191,25 @@ $("compare").addEventListener("click", async () => {
   try { renderComparison(await api("/api/compare", { method: "POST", body: JSON.stringify({ requests: Number($("requests").value), concurrency: Number($("concurrency").value), seed: Number($("seed").value) }) })); } catch (error) { $("compare-status").textContent = error.message; } finally { $("compare").disabled = false; }
 });
 
-addEventListener("resize", () => drawChart((state?.training || state?.last_training)?.curve || []), { passive: true });
+["node1", "node2", "node3"].forEach((node) => $("load-" + node).addEventListener("input", () => {
+  $("load-" + node + "-value").textContent = `${$("load-" + node).value}%`;
+  if (!state?.interactive || state.interactive.status !== "running") renderInteractive(state?.interactive);
+}));
+
+$("interactive-start").addEventListener("click", async () => {
+  try {
+    const simulation = await api("/api/interactive/start", { method: "POST", body: JSON.stringify({ loads: readInteractiveLoads(), requests: Number($("interactive-requests").value), epsilon: Number($("interactive-epsilon").value), interval_ms: Number($("interactive-interval").value), concurrency: Number($("interactive-concurrency").value), learning_mode: $("interactive-learning").value, seed: Number($("seed").value) }) });
+    if (state) state.interactive = simulation; renderInteractive(simulation);
+  } catch (error) { alert(error.message); }
+});
+
+$("interactive-apply").addEventListener("click", async () => {
+  try { const simulation = await api("/api/interactive/load", { method: "POST", body: JSON.stringify({ loads: readInteractiveLoads() }) }); if (state) state.interactive = simulation; renderInteractive(simulation); } catch (error) { alert(error.message); }
+});
+
+$("interactive-stop").addEventListener("click", async () => {
+  try { const simulation = await api("/api/interactive/stop", { method: "POST", body: "{}" }); if (state) state.interactive = simulation; renderInteractive(simulation); } catch (error) { alert(error.message); }
+});
+
+addEventListener("resize", () => { drawChart((state?.training || state?.last_training)?.curve || []); drawInteractiveChart(state?.interactive?.records || []); }, { passive: true });
 loadStatus(); loadInfrastructure(); setInterval(loadInfrastructure, 15000);

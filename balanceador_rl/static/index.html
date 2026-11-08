@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Laboratório de Q-Learning para balanceamento de carga">
   <title>Balanceador RL · Q-Learning</title>
-  <link rel="stylesheet" href="/static/styles.css?v=1">
+  <link rel="stylesheet" href="/static/styles.css?v=2">
 </head>
 <body>
   <header class="topbar">
@@ -55,6 +55,38 @@
       <div id="comparison" class="comparison empty">Nenhuma comparação executada.</div>
     </section>
 
+    <section class="panel interactive-panel">
+      <header><div><span class="eyebrow">Etapa 3 · adaptação online</span><h2>Simulação interativa de carga</h2><p>Defina as cargas, acompanhe requisições HTTP reais e altere o cenário enquanto o agente decide.</p></div><span id="interactive-badge" class="badge alternate">Aguardando</span></header>
+      <div class="interactive-config">
+        <div class="load-inputs">
+          <label><span>node1 · 1,00 CPU <strong id="load-node1-value">20%</strong></span><input id="load-node1" type="range" min="0" max="100" value="20"></label>
+          <label><span>node2 · 0,25 CPU <strong id="load-node2-value">45%</strong></span><input id="load-node2" type="range" min="0" max="100" value="45"></label>
+          <label><span>node3 · 0,05 CPU <strong id="load-node3-value">70%</strong></span><input id="load-node3" type="range" min="0" max="100" value="70"></label>
+        </div>
+        <div class="interactive-options">
+          <label>Requisições<select id="interactive-requests"><option>30</option><option selected>60</option><option>100</option><option>200</option></select></label>
+          <label>Exploração ε<select id="interactive-epsilon"><option value="0.05">5%</option><option value="0.15" selected>15%</option><option value="0.30">30%</option></select></label>
+          <label>Aprendizado<select id="interactive-learning"><option value="fixed">Q-Table fixa</option><option value="continuous" selected>Contínuo</option></select></label>
+          <label>Simultâneas<select id="interactive-concurrency"><option>1</option><option>3</option><option selected>6</option><option>10</option></select></label>
+          <label>Intervalo<select id="interactive-interval"><option value="50" selected>50 ms</option><option value="100">100 ms</option><option value="250">250 ms</option><option value="500">500 ms</option><option value="1000">1 s</option></select></label>
+          <button id="interactive-start" type="button">Iniciar simulação</button>
+          <button id="interactive-apply" class="secondary" type="button">Aplicar novas cargas</button>
+          <button id="interactive-stop" class="danger-button" type="button" disabled>Parar</button>
+        </div>
+      </div>
+      <div class="interactive-progress"><div><i id="interactive-progress-bar"></i></div><strong id="interactive-progress-percent">0%</strong><span id="interactive-message">A Q-Table treinada será copiada para esta sessão.</span></div>
+      <div class="interactive-live-grid">
+        <div class="interactive-chart-card"><canvas id="interactive-chart" height="260" aria-label="Evolução da CPU dos servidores"></canvas><div class="legend"><span class="node1-line">CPU node1</span><span class="node2-line">CPU node2</span><span class="node3-line">CPU node3</span></div></div>
+        <div class="live-servers" id="live-servers">
+          <article data-live-node="node1"><header><strong>node1</strong><span>1,00 CPU</span></header><div class="load-bar"><i></i></div><b>20%</b><small>Latência: —</small><em>Ativas: 0 · escolhas: 0</em><mark>Saudável</mark></article>
+          <article data-live-node="node2"><header><strong>node2</strong><span>0,25 CPU</span></header><div class="load-bar"><i></i></div><b>45%</b><small>Latência: —</small><em>Ativas: 0 · escolhas: 0</em><mark>Saudável</mark></article>
+          <article data-live-node="node3"><header><strong>node3</strong><span>0,05 CPU</span></header><div class="load-bar"><i></i></div><b>70%</b><small>Latência: —</small><em>Ativas: 0 · escolhas: 0</em><mark>Saudável</mark></article>
+          <div class="decision-box"><small>Última decisão</small><strong id="last-decision">Nenhuma requisição executada</strong><span id="last-decision-detail">Aguardando início da simulação.</span></div>
+        </div>
+      </div>
+      <div class="decision-history"><div class="history-head"><strong>Decisões recentes</strong><span>CPU, concorrência e saturação influenciam cada decisão</span></div><div class="decision-table-wrap"><table><thead><tr><th>#</th><th>Estado</th><th>Ação</th><th>Modo</th><th>CPU antes</th><th>Ativas</th><th>Latência</th><th>R total</th><th>Q antes → depois</th></tr></thead><tbody id="interactive-history"><tr><td colspan="9">Nenhuma decisão registrada.</td></tr></tbody></table></div></div>
+    </section>
+
     <section class="method-grid">
       <article><span>1</span><h3>Antes de agir</h3><p>Com probabilidade ε, o agente explora um nó aleatório. Caso contrário, escolhe a maior nota no estado atual.</p></article>
       <article><span>2</span><h3>Recompensa</h3><p><b>+20</b> abaixo de 100 ms, <b>+2</b> até 250 ms, <b>−15</b> acima disso e <b>−100</b> em timeout.</p></article>
@@ -63,6 +95,6 @@
   </main>
 
   <footer>Bruno Sousa de Castro · Dener Reis Menezes · Prof. Me. Mateus Valente</footer>
-  <script src="/static/app.js?v=1" defer></script>
+  <script src="/static/app.js?v=5" defer></script>
 </body>
 </html>
