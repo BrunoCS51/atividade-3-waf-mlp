@@ -44,3 +44,55 @@ services:
       - ./python:/data
       - ./external_data/csic2010:/external_data/csic2010:ro
       - ./tratamento_dados:/tratamento_dados:ro
+
+  rl_node1:
+    image: traefik/whoami:latest
+    profiles: ["reforco"]
+    cpus: 1.00
+    mem_limit: 128m
+    networks: [rl_net]
+
+  rl_node2:
+    image: traefik/whoami:latest
+    profiles: ["reforco"]
+    cpus: 0.25
+    mem_limit: 128m
+    networks: [rl_net]
+
+  rl_node3:
+    image: traefik/whoami:latest
+    profiles: ["reforco"]
+    cpus: 0.05
+    mem_limit: 64m
+    networks: [rl_net]
+
+  rl_proxy:
+    image: nginx:alpine
+    profiles: ["reforco"]
+    ports:
+      - "8090:8080"
+    depends_on:
+      - rl_node1
+      - rl_node2
+      - rl_node3
+    volumes:
+      - ./balanceador_rl/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks: [rl_net]
+
+  rl_agent:
+    build: ./balanceador_rl
+    profiles: ["reforco"]
+    ports:
+      - "8091:8000"
+    environment:
+      RL_PROXY_URL: http://rl_proxy:8080
+      RL_DATA_DIR: /app/data
+    depends_on:
+      - rl_proxy
+    volumes:
+      - ./balanceador_rl/data:/app/data
+    networks: [rl_net]
+
+networks:
+  rl_net:
+    driver: bridge

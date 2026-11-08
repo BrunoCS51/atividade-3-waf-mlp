@@ -18,6 +18,7 @@ Thumbs.db
 *.log
 python/monitor_waf.csv
 python/experimentos/*/historico_treinamentos/
+balanceador_rl/data/*.json
 
 # HTTP CSIC 2010: uso local; redistribuicao nao licenciada explicitamente
 external_data/csic2010/*.txt

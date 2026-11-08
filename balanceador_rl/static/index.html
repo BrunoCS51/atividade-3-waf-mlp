@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Laboratório de Q-Learning para balanceamento de carga">
+  <title>Balanceador RL · Q-Learning</title>
+  <link rel="stylesheet" href="/static/styles.css?v=1">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span>Q</span><strong>Balanceador RL<small>Q-Learning tabular · infraestrutura Docker</small></strong></a>
+    <div class="authors"><span>Bruno Sousa de Castro <small>RA 5132956</small></span><i>+</i><span>Dener Reis Menezes <small>RA 5170343</small></span><i>|</i><span>Prof. Me. Mateus Valente</span></div>
+    <a class="back" href="http://localhost:8080/dashboard/">← Monitor WAF</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div><span class="eyebrow">Aprendizado por reforço em infraestrutura</span><h1>Ensine o agente a escolher o servidor mais eficiente.</h1><p>O agente observa o estado, escolhe uma ação com ε-greedy, mede a latência HTTP real e atualiza somente Q(s,a) pela Equação de Bellman.</p></div>
+      <div class="formula"><small>Equação de Bellman</small><code>Q(s,a) ← Q(s,a) + α[R + γ max Q(s′,a′) − Q(s,a)]</code></div>
+    </section>
+
+    <section class="status-grid">
+      <article><span>Infraestrutura</span><strong id="infra-status">Verificando…</strong><small id="infra-detail">Proxy e três nós</small></article>
+      <article><span>Treinamento</span><strong id="training-status">Não iniciado</strong><small id="training-detail">500 episódios recomendados</small></article>
+      <article><span>Exploração ε</span><strong id="epsilon-value">30,0%</strong><small>decai até 2%</small></article>
+      <article><span>Política em carga alta</span><strong id="best-node">Ainda empatada</strong><small>arg max Q(s,a)</small></article>
+    </section>
+
+    <section class="layout">
+      <article class="panel training-panel">
+        <header><div><span class="eyebrow">Etapa 1</span><h2>Treinar agente</h2></div><span class="badge">ε-greedy</span></header>
+        <div class="controls">
+          <label>Episódios<select id="episodes"><option>100</option><option>250</option><option selected>500</option><option>1000</option></select></label>
+          <label>Seed<input id="seed" type="number" value="42" min="0" max="999999"></label>
+          <button id="train" type="button">Iniciar treinamento</button>
+          <button id="reset" class="secondary" type="button">Limpar aprendizado</button>
+        </div>
+        <div class="progress"><i id="progress-bar"></i></div>
+        <div class="progress-line"><strong id="progress-percent">0%</strong><span id="progress-message">Aguardando início.</span><small id="progress-time">0 s</small></div>
+        <canvas id="learning-chart" height="230" aria-label="Curva de recompensa, latência e epsilon"></canvas>
+        <div class="legend"><span class="reward">Recompensa</span><span class="latency">Latência normalizada</span><span class="epsilon">ε × 100</span></div>
+      </article>
+
+      <article class="panel q-panel">
+        <header><div><span class="eyebrow">Conhecimento aprendido</span><h2>Q-Table 3 × 3</h2></div><span class="badge alternate">Q(s,a)</span></header>
+        <div class="table-wrap"><table><thead><tr><th>Estado</th><th>node1<small>1,00 CPU</small></th><th>node2<small>0,25 CPU</small></th><th>node3<small>0,05 CPU</small></th><th>Política π(s)</th></tr></thead><tbody id="q-table"></tbody></table></div>
+        <div class="nodes" id="nodes"><div data-node="node1"><i></i><strong>node1</strong><span>1,00 CPU</span><small>—</small></div><div data-node="node2"><i></i><strong>node2</strong><span>0,25 CPU</span><small>—</small></div><div data-node="node3"><i></i><strong>node3</strong><span>0,05 CPU</span><small>—</small></div></div>
+      </article>
+    </section>
+
+    <section class="panel comparison-panel">
+      <header><div><span class="eyebrow">Etapa 2</span><h2>Round-Robin × Q-Learning</h2><p>Rajadas reais e equivalentes contra os mesmos três contêineres.</p></div></header>
+      <div class="compare-controls"><label>Requisições<select id="requests"><option>30</option><option selected>60</option><option>120</option><option>300</option></select></label><label>Concorrência<select id="concurrency"><option>3</option><option selected>6</option><option>10</option><option>20</option></select></label><button id="compare" type="button">Executar comparação</button><span id="compare-status">Treine o agente antes de comparar.</span></div>
+      <div id="comparison" class="comparison empty">Nenhuma comparação executada.</div>
+    </section>
+
+    <section class="method-grid">
+      <article><span>1</span><h3>Antes de agir</h3><p>Com probabilidade ε, o agente explora um nó aleatório. Caso contrário, escolhe a maior nota no estado atual.</p></article>
+      <article><span>2</span><h3>Recompensa</h3><p><b>+20</b> abaixo de 100 ms, <b>+2</b> até 250 ms, <b>−15</b> acima disso e <b>−100</b> em timeout.</p></article>
+      <article><span>3</span><h3>Depois de agir</h3><p>Bellman atualiza apenas a célula correspondente ao estado observado e ao servidor realmente escolhido.</p></article>
+    </section>
+  </main>
+
+  <footer>Bruno Sousa de Castro · Dener Reis Menezes · Prof. Me. Mateus Valente</footer>
+  <script src="/static/app.js?v=1" defer></script>
+</body>
+</html>

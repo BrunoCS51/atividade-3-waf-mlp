@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+data/*.json
+tests/
+RELATORIO_APRENDIZAGEM_REFORCO.md

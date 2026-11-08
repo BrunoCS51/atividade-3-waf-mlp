@@ -142,6 +142,18 @@ button, input, select { font: inherit; }
   border-radius: 11px;
 }
 
+.rl-dashboard-link {
+  padding: .48rem .62rem;
+  color: #4f46e5;
+  border: 1px solid #cfd2ff;
+  background: #f2f2ff;
+  border-radius: 9px;
+  font-size: .66rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .nav-link {
   position: relative;
   padding: 0.48rem 0.82rem;

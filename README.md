@@ -56,6 +56,7 @@ docker compose up --build
 
 - Aplicação protegida: <http://localhost:8080/>
 - Dashboard: <http://localhost:8080/dashboard/>
+- Laboratório de Q-Learning: <http://localhost:8091/> (com o profile `reforco`)
 
 O dashboard começa pelo monitor operacional. Cada linha mostra E1 e E2 para a mesma requisição, o modelo principal e a decisão HTTP efetiva. A seção seguinte apresenta os experimentos lado a lado, com arquitetura, dataset, BP, AG, métricas, matrizes, curvas diagnósticas e parâmetros lidos dos artefatos oficiais — não há resultados codificados manualmente na interface.
 
@@ -75,11 +76,22 @@ O histórico `python/monitor_waf.csv` é runtime, começa ausente/vazio e é cri
 
 ```powershell
 python -m unittest python/test_integracao_final.py
+python -m unittest discover -s balanceador_rl/tests -v
 node --check dashboard/app.js
 docker compose config
 ```
 
 Esses testes verificam os quatro modelos, arquiteturas, separação de pesos e thresholds, split/normalização E2, inferência E1/E2 para uma requisição, autoridade exclusiva do principal e leitura do dashboard. Eles não treinam, não acessam o conjunto reservado e não fazem replay massivo.
+
+## Aprendizado por reforço — balanceador de carga
+
+O diretório `balanceador_rl/` implementa, em paralelo e sem alterar o WAF, a atividade de Q-Learning tabular proposta pelo Prof. Me. Mateus Valente. Três servidores Docker com capacidades assimétricas ficam atrás de um Nginx próprio; o agente mede latência HTTP real, recebe recompensa, atualiza `Q(s,a)` por Bellman e compara a política aprendida com Round-Robin.
+
+```powershell
+docker compose --profile reforco up -d --build
+```
+
+O profile mantém o WAF em `8080`, publica o proxy RL em `8090` e o painel RL em `8091`. O relatório acadêmico e o roteiro de apresentação estão em [`balanceador_rl/RELATORIO_APRENDIZAGEM_REFORCO.md`](balanceador_rl/RELATORIO_APRENDIZAGEM_REFORCO.md).
 
 ## Limitação observada
 
